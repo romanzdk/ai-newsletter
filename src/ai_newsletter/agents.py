@@ -52,7 +52,7 @@ triage_agent = Agent(
 
 @triage_agent.output_validator
 def _known_ids(ctx: RunContext[set[str]], triage: Triage) -> Triage:
-    unknown = {id for event in triage.events for id in event.candidate_ids} - ctx.deps
+    unknown = {candidate_id for event in triage.events for candidate_id in event.candidate_ids} - ctx.deps
     if unknown:
         raise ModelRetry(f"Unknown candidate ids: {sorted(unknown)}. Use only ids from the list.")
     return triage

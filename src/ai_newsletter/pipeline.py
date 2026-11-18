@@ -82,7 +82,7 @@ async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: R
     record.skipped = triage.output.skipped
 
     for plan in triage.output.events[:MAX_EVENTS_TO_VERIFY]:
-        candidates = [by_id[id] for id in plan.candidate_ids]
+        candidates = [by_id[candidate_id] for candidate_id in plan.candidate_ids]
         record.events.append(await verify_event(plan, candidates, record.day, web, history, usage, agentic))
     select(record.events, record.day, history)
 

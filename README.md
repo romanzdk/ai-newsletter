@@ -245,3 +245,7 @@ Suggested reading order:
   `config.py`.
 - **No LangGraph, no database, no web framework.** The flow is a straight line with one loop, so plain
   Python is easier to read than a graph. Runs are JSON files, so you can open them in any editor.
+
+## License
+
+[MIT](LICENSE)

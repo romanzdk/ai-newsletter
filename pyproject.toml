@@ -5,6 +5,7 @@ description = "A short, verified daily digest of practical AI news (Pydantic AI 
 authors = [
     { name = "Roman Žydyk" }
 ]
+license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
     "httpx>=0.28.1",

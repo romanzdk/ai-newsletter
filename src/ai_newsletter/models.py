@@ -77,7 +77,10 @@ class Verdict(BaseModel):
         "be confirmed from a reliable source."
     )
     availability: Availability
-    released_on: date | None = Field(description="Day the change became public per the sources. None if unknown.")
+    released_on: date | None = Field(
+        description="Day the vendor or project published the change, as shown by the release or announcement "
+        "itself. Never the date of an HN or community post. None if the official source shows no date."
+    )
     date_note: str | None = Field(description="Any doubt or conflict about the date, else null.")
     impact: int = Field(ge=1, le=5, description="Practical impact for developers: 1 minor, 5 major.")
     claims: list[Claim] = Field(description="The key facts, each with the page that supports it.")

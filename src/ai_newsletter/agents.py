@@ -105,7 +105,9 @@ verifier = Agent(
         f"(the release, the original announcement, the docs; official changelogs: {', '.join(OFFICIAL_CHANGELOGS)}). "
         "Stop when you know enough or the budget runs out; "
         "then exclude the event or state the uncertainty, rather than guess. "
-        "Write the Czech fields plainly: no hype, no invented time savings or guarantees. "
+        "Write the Czech fields plainly: no hype, no invented time savings or guarantees, and no details the "
+        "pages don't state (licence, how it works inside, who it suits). For a stable release of something that "
+        "was available before as preview, beta or nightly, say so in the item, so it does not read as brand new. "
         f"{UNTRUSTED}"
     ),
 )

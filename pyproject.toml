@@ -1,0 +1,39 @@
+[project]
+name = "ai-newsletter"
+version = "0.1.0"
+description = "A short, verified daily digest of practical AI news (Pydantic AI + Braintrust)"
+authors = [
+    { name = "Roman Žydyk", email = "romanzdk@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic-ai-slim[openrouter]>=2.70.0",
+]
+
+[project.scripts]
+ai-newsletter = "ai_newsletter.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
+evals = [
+    "autoevals>=0.4.1",
+    "braintrust>=0.51.0",
+    "openai>=3.55.1",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

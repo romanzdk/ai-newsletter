@@ -21,7 +21,7 @@ def run_folder(tmp_path, monkeypatch):
 @pytest.fixture
 def telegram_api(monkeypatch):
     """Answer Telegram requests with `answers` in turn; returns the list of sent texts."""
-    sent = []
+    sent, threads = [], []
 
     def use(*answers):
         replies = iter(answers)
@@ -30,12 +30,14 @@ def telegram_api(monkeypatch):
             reply = next(replies)
             if isinstance(reply, Exception):
                 raise reply
-            sent.append(json.loads(request.content)["text"])
+            body = json.loads(request.content)
+            sent.append(body["text"])
+            threads.append(body.get("message_thread_id"))
             return reply
 
         transport = httpx.MockTransport(handler)
         monkeypatch.setattr(telegram.httpx, "AsyncClient", functools.partial(httpx.AsyncClient, transport=transport))
-        return sent
+        return sent, threads
 
     return use
 
@@ -48,13 +50,21 @@ def state(run_folder) -> dict:
 
 
 async def test_the_report_is_sent_once_per_day(run_folder, telegram_api):
-    sent = telegram_api(OK, OK)
+    sent, threads = telegram_api(OK, OK)
     assert await telegram.send(run_folder) == "sent to Telegram in 1 message(s)"
+    assert threads == [None]  # no topic set: the chat itself
     assert sent[0].startswith("<b>AI novinky za 10. 3. 2026</b>")
     assert state(run_folder)["status"] == "sent"
     with pytest.raises(telegram.NotSent, match="already sent"):
         await telegram.send(run_folder)  # a re-run of the same day does not deliver twice
     assert len(sent) == 1
+
+
+async def test_a_topic_of_a_group_can_be_the_target(run_folder, telegram_api, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_THREAD_ID", "7")
+    _, threads = telegram_api(OK)
+    await telegram.send(run_folder)
+    assert threads == ["7"]
 
 
 async def test_a_clear_refusal_can_be_retried(run_folder, telegram_api):

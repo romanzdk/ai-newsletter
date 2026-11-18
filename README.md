@@ -110,7 +110,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.13.
 
 ```bash
 uv sync
-uv run pytest                     # 36 offline tests, no API key needed
+uv run pytest                     # 37 offline tests, no API key needed
 ```
 
 ### Try it without API keys or the live web
@@ -154,7 +154,10 @@ OpenRouter's own usage counter).
 2. Find your chat id: write to [@userinfobot](https://t.me/userinfobot), or open
    `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id`. The bot can be one you
    already use elsewhere: this app only sends, it never reads the bot's messages.
-3. Run with `--telegram`:
+3. Optional: to post into one topic (thread) of a group with topics, add the bot to the group, set
+   `TELEGRAM_CHAT_ID` to the group's id (`-100…`) and `TELEGRAM_THREAD_ID` to the topic's id. Both
+   are in a message link from that topic: `t.me/c/<group>/<topic>/<message>`, group id = `-100<group>`.
+4. Run with `--telegram`:
 
 ```bash
 export TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=...
@@ -225,10 +228,10 @@ is small), and the judge is the same model as the writer, so read them as a sign
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 36 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
+| Offline, fictional data, fake models | 37 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
 | Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
 | Live public sources | Real runs for 2026-11-16 and 2026-11-17, all 9 sources read, complete reports, replays from the saved snapshots. |
-| Delivery | Telegram: 5 offline tests with a fake Telegram API (send once per day, retry only a clear refusal, no blind resend after a broken connection, no token on disk, message splitting) and one real send to a private chat. |
+| Delivery | Telegram: 6 offline tests with a fake Telegram API (send once per day, topic of a group, retry only a clear refusal, no blind resend after a broken connection, no token on disk, message splitting) and one real send to a private chat. |
 
 ## Known limits and failures
 

@@ -11,7 +11,8 @@ At most one report per day is delivered. The state is kept in data/runs/<day>/te
 Only "failed" may be retried automatically. In every other case nothing is sent again, so a re-run or
 a retry never delivers the same digest twice. To send again after checking, delete telegram.json.
 
-Needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. Resend an earlier run:
+Needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. Optional TELEGRAM_THREAD_ID sends into one topic of a
+group with topics. Resend an earlier run:
     uv run python -m ai_newsletter.telegram data/runs/2026-11-17/<run>
 """
 
@@ -50,19 +51,16 @@ async def send(run_folder: Path) -> str:
         raise NotSent(f"already {state['status']} for {record.day} ({state_file}); delete it to send again")
 
     parts = split(telegram_html(record.report))
+    destination = {"chat_id": chat_id, "parse_mode": "HTML", "link_preview_options": {"is_disabled": True}}
+    if thread_id := os.environ.get("TELEGRAM_THREAD_ID"):
+        destination["message_thread_id"] = thread_id
     state = {"run": run_folder.name, "status": "sending", "parts": len(parts), "parts_sent": 0, "error": None}
     _save(state_file, state)
     async with httpx.AsyncClient(timeout=30) as client:
         for part in parts:
             try:
                 response = await client.post(
-                    f"https://api.telegram.org/bot{token}/sendMessage",
-                    json={
-                        "chat_id": chat_id,
-                        "text": part,
-                        "parse_mode": "HTML",
-                        "link_preview_options": {"is_disabled": True},
-                    },
+                    f"https://api.telegram.org/bot{token}/sendMessage", json=destination | {"text": part}
                 )
             except httpx.HTTPError as error:  # the message may or may not have arrived
                 state |= {"status": "uncertain", "error": type(error).__name__}

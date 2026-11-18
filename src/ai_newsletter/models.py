@@ -84,7 +84,9 @@ class Verdict(BaseModel):
     title: str = Field(description="Czech: short, concrete headline.")
     what_changed: str = Field(description="Czech: one short sentence on what changed.")
     why_it_matters: str = Field(description="Czech: one short sentence on the practical use. No invented benefits.")
-    caveat: str | None = Field(description="Czech: the most important limit or condition (plan, preview, region...).")
+    caveat: str | None = Field(
+        description="Czech: one short sentence with the single most important limit (plan, preview, region...)."
+    )
     source_url: str = Field(description="The decisive source, a page you read.")
 
 

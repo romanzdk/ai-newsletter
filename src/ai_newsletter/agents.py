@@ -33,6 +33,7 @@ AUDIENCE = (
 
 triage_agent = Agent(
     MODEL,
+    defer_model_check=True,  # the API key is needed only when the model is called, not on import
     output_type=Triage,
     instructions=(
         "You pick which of today's links are worth verifying for a short daily digest of practical AI news. "
@@ -80,6 +81,7 @@ class VerifyDeps:
 
 verifier = Agent(
     MODEL,
+    defer_model_check=True,
     deps_type=VerifyDeps,
     output_type=Verdict,
     instructions=(

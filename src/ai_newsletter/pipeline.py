@@ -24,6 +24,7 @@ from ai_newsletter.sources import collect
 from ai_newsletter.web import Web
 
 PREFETCH_PER_EVENT = 3  # the event's own links, read before the model starts
+LIMITS = UsageLimits(cost_limit=Decimal(str(RUN_COST_LIMIT_USD)), request_limit=None)  # for the whole run
 
 
 class RunFailed(Exception):
@@ -67,8 +68,6 @@ async def run_day(day: date, data_dir: Path, replay_from: Path | None = None, ag
 
 
 async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: RunUsage, agentic: bool) -> None:
-    limits = UsageLimits(cost_limit=Decimal(str(RUN_COST_LIMIT_USD)), request_limit=None)
-
     record.candidates, record.coverage = await collect(web, record.day)
     if not any(source.ok for source in record.coverage):
         raise RunFailed("no source could be read")
@@ -78,13 +77,13 @@ async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: R
         return
     by_id = {candidate.id: candidate for candidate in record.candidates}
     triage = await triage_agent.run(
-        triage_prompt(record.day, record.candidates, history), deps=set(by_id), usage=usage, usage_limits=limits
+        triage_prompt(record.day, record.candidates, history), deps=set(by_id), usage=usage, usage_limits=LIMITS
     )
     record.skipped = triage.output.skipped
 
     for plan in triage.output.events[:MAX_EVENTS_TO_VERIFY]:
         candidates = [by_id[id] for id in plan.candidate_ids]
-        record.events.append(await _verify(plan, candidates, record.day, web, history, usage, limits, agentic))
+        record.events.append(await _verify(plan, candidates, record.day, web, history, usage, agentic))
     select(record.events, record.day, history)
 
 
@@ -95,7 +94,6 @@ async def _verify(
     web: Web,
     history: list[HistoryItem],
     usage: RunUsage,
-    limits: UsageLimits,
     agentic: bool,
 ) -> EventResult:
     result = EventResult(plan=plan)
@@ -106,7 +104,7 @@ async def _verify(
     prompt = verify_prompt(day, plan, candidates, deps, history)
     try:
         run = await verifier.run(
-            prompt, deps=deps, toolsets=[FETCH_TOOL] if agentic else [], usage=usage, usage_limits=limits
+            prompt, deps=deps, toolsets=[FETCH_TOOL] if agentic else [], usage=usage, usage_limits=LIMITS
         )
         result.verdict = run.output
     except UsageLimitExceeded as error:

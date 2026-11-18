@@ -83,13 +83,16 @@ def _plain(text: str, limit: int = 600) -> str:
 # --- Hacker News (Algolia API) -------------------------------------------------
 
 
-async def hacker_news(web: Web, source: Source, day: date) -> list[Candidate]:
+def hn_search_url(base_url: str, day: date, page: int) -> str:
     start, end = days.window(day)
     filters = f"created_at_i>={int(start.timestamp())},created_at_i<{int(end.timestamp())},points>={HN_MIN_POINTS}"
+    return f"{base_url}?{urlencode({'tags': 'story', 'numericFilters': filters, 'hitsPerPage': 200, 'page': page})}"
+
+
+async def hacker_news(web: Web, source: Source, day: date) -> list[Candidate]:
     found = []
     for page in range(HN_MAX_PAGES):
-        query = urlencode({"tags": "story", "numericFilters": filters, "hitsPerPage": 200, "page": page})
-        data = json.loads(await _read(web, f"{source.url}?{query}"))
+        data = json.loads(await _read(web, hn_search_url(source.url, day, page)))
         for hit in data["hits"]:
             discussion = f"https://news.ycombinator.com/item?id={hit['objectID']}"
             found.append(

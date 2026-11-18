@@ -1,0 +1,425 @@
+{
+  "day": "2026-03-10",
+  "window_start": "2026-03-09T23:00:00Z",
+  "window_end": "2026-03-10T23:00:00Z",
+  "started_at": "2026-11-18T18:14:11.192503Z",
+  "finished_at": "2026-11-18T18:14:59.517025Z",
+  "mode": "replay",
+  "variant": "agentic",
+  "model": "openrouter:anthropic/claude-haiku-5.5",
+  "status": "partial",
+  "coverage": [
+    {
+      "source": "Hacker News",
+      "url": "https://hn.algolia.com/api/v1/search_by_date",
+      "ok": true,
+      "candidates": 8,
+      "error": null
+    },
+    {
+      "source": "OpenAI News",
+      "url": "https://openai.com/news/rss.xml",
+      "ok": false,
+      "candidates": 0,
+      "error": "https://openai.com/news/rss.xml: HTTP 503"
+    },
+    {
+      "source": "Cursor Changelog",
+      "url": "https://cursor.com/changelog/rss.xml",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "Anthropic News",
+      "url": "https://www.anthropic.com/news",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "Claude Blog",
+      "url": "https://claude.com/blog",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "GitHub anthropics/claude-code",
+      "url": "https://api.github.com/repos/anthropics/claude-code/releases?per_page=30",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "GitHub openai/codex",
+      "url": "https://api.github.com/repos/openai/codex/releases?per_page=30",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "GitHub pingdotgg/t3code",
+      "url": "https://api.github.com/repos/pingdotgg/t3code/releases?per_page=30",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    },
+    {
+      "source": "GitHub paperclipai/paperclip",
+      "url": "https://api.github.com/repos/paperclipai/paperclip/releases?per_page=30",
+      "ok": true,
+      "candidates": 0,
+      "error": null
+    }
+  ],
+  "candidates": [
+    {
+      "id": "hn-9000001",
+      "source": "Hacker News",
+      "title": "Quillstack 2.0: agent runs can resume from the last saved step",
+      "url": "https://quillstack.dev/blog/quillstack-2-0",
+      "published": "2026-03-10T14:05:00Z",
+      "summary": "",
+      "points": 412,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000001"
+    },
+    {
+      "id": "hn-9000008",
+      "source": "Hacker News",
+      "title": "Quillstack 2.0 resumable runs – first impressions",
+      "url": "https://anas-devlog.net/quillstack-2-first-look",
+      "published": "2026-03-10T19:40:00Z",
+      "summary": "",
+      "points": 45,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000008"
+    },
+    {
+      "id": "hn-9000002",
+      "source": "Hacker News",
+      "title": "Show HN: Tidepool – a terminal dashboard for your coding agents",
+      "url": "https://github.com/tidepool-dev/tidepool",
+      "published": "2026-03-10T09:12:00Z",
+      "summary": "",
+      "points": 230,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000002"
+    },
+    {
+      "id": "hn-9000003",
+      "source": "Hacker News",
+      "title": "Ask HN: Is Orbitcode silently dropping files from the context?",
+      "url": "https://news.ycombinator.com/item?id=9000003",
+      "published": "2026-03-10T11:30:00Z",
+      "summary": "",
+      "points": 156,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000003"
+    },
+    {
+      "id": "hn-9000005",
+      "source": "Hacker News",
+      "title": "Lumen Agents adds shared team workspaces",
+      "url": "https://lumenagents.dev/changelog/team-workspaces",
+      "published": "2026-03-10T16:20:00Z",
+      "summary": "",
+      "points": 140,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000005"
+    },
+    {
+      "id": "hn-9000004",
+      "source": "Hacker News",
+      "title": "Mainframe AI raises $200M to build agent infrastructure",
+      "url": "https://wire-news.net/mainframe-ai-series-c",
+      "published": "2026-03-10T07:45:00Z",
+      "summary": "",
+      "points": 98,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000004"
+    },
+    {
+      "id": "hn-9000006",
+      "source": "Hacker News",
+      "title": "Show HN: AgentNotes – a scratchpad your coding agent can write to",
+      "url": "https://agentnotes.dev/",
+      "published": "2026-03-10T20:10:00Z",
+      "summary": "",
+      "points": 64,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000006"
+    },
+    {
+      "id": "hn-9000007",
+      "source": "Hacker News",
+      "title": "A visual guide to B-tree indexes",
+      "url": "https://btree-guide.org/",
+      "published": "2026-03-10T08:00:00Z",
+      "summary": "",
+      "points": 520,
+      "discussion_url": "https://news.ycombinator.com/item?id=9000007"
+    }
+  ],
+  "skipped": [
+    {
+      "candidate_ids": [
+        "hn-9000004"
+      ],
+      "reason": "Funding news (raise), not practical AI tool use."
+    },
+    {
+      "candidate_ids": [
+        "hn-9000007"
+      ],
+      "reason": "General database education, not AI-related."
+    }
+  ],
+  "events": [
+    {
+      "plan": {
+        "candidate_ids": [
+          "hn-9000001",
+          "hn-9000008"
+        ],
+        "label": "Quillstack 2.0 resumable agent runs",
+        "reason": "Agent runs that resume from the last saved step affect how developers build and recover long agent workflows; high HN interest.",
+        "to_verify": "Confirm the official Quillstack 2.0 release and resumable-run behavior from the primary blog post; check whether it is generally available or preview, and what the first-impressions post reports about real behavior."
+      },
+      "verdict": {
+        "include": true,
+        "reason": "The official Quillstack blog post, dated 2026-03-10, says 2.0 is generally available, with resumable runs stable and on by default, available on all plans. Its core claims are supported by that page. The first-impressions post is anecdotal (one local test, which it says is not a benchmark), so it does not confirm the 40% speed figure and is not used as a basis for it.",
+        "kind": "release",
+        "availability": "available",
+        "released_on": "2026-03-10",
+        "date_note": "The primary blog's metadata shows 13:00 UTC and the HN listing shows 14:05 UTC, both on 2026-03-10, so there is no conflict. The first-impressions post is from 19:00 UTC the same day.",
+        "impact": 4,
+        "claims": [
+          {
+            "text": "Quillstack 2.0 is generally available as of March 10, 2026.",
+            "source_url": "https://quillstack.dev/blog/quillstack-2-0"
+          },
+          {
+            "text": "Resumable runs let a run that stops due to a crash, timeout or rate limit continue from the last saved step; they were in beta since 1.8 (January 2026) and 2.0 makes them stable and on by default.",
+            "source_url": "https://quillstack.dev/blog/quillstack-2-0"
+          },
+          {
+            "text": "Steps that write to external systems (e.g. sending email, calling a payment API) are not replayed automatically; they must be marked idempotent, otherwise Quillstack stops and asks for confirmation.",
+            "source_url": "https://quillstack.dev/blog/quillstack-2-0"
+          },
+          {
+            "text": "Availability is listed as all plans; saved run state is kept 24 hours on Free and 30 days on Team. Python 3.10 is no longer supported (breaking change).",
+            "source_url": "https://quillstack.dev/blog/quillstack-2-0"
+          },
+          {
+            "text": "One author tested a killed long run that resumed fine, and reports about 40% faster overall in a single laptop test that the author says is not a benchmark.",
+            "source_url": "https://anas-devlog.net/quillstack-2-first-look"
+          }
+        ],
+        "title": "Quillstack 2.0: běhy agentů lze obnovit od posledního kroku",
+        "what_changed": "Quillstack 2.0 je podle oficiálního blogu dostupný obecně a zapnuté obnovitelné běhy (resumable runs) pokračují od posledního uloženého kroku po pádu, timeoutu nebo rate limitu.",
+        "why_it_matters": "Pro dlouhé agentní úlohy to znamená, že se po přerušení nemusí začínat od nuly.",
+        "caveat": "Kroky zapisující do externích systémů (e-mail, platby) se automaticky neopakují a bez označení idempotentní se zastaví na potvrzení; uložený stav běhu se drží 24 hodin na Free a 30 dní na Team.",
+        "source_url": "https://quillstack.dev/blog/quillstack-2-0"
+      },
+      "error": null,
+      "pages_read": [
+        "https://quillstack.dev/blog/quillstack-2-0",
+        "https://anas-devlog.net/quillstack-2-first-look"
+      ],
+      "refused_urls": [],
+      "selected": true,
+      "drop_reason": null
+    },
+    {
+      "plan": {
+        "candidate_ids": [
+          "hn-9000002"
+        ],
+        "label": "Tidepool terminal dashboard for coding agents",
+        "reason": "A terminal dashboard for monitoring coding agents is a practical tool for developers using agent workflows.",
+        "to_verify": "Check the GitHub repo for what it does, maturity, license and whether it supports common coding agents."
+      },
+      "verdict": {
+        "include": true,
+        "reason": "Included as a clearly labelled discovery. The Show HN post is dated 2026-03-10 by the candidate feed, but I could not read the HN page, so that date rests only on the feed. The GitHub repo was created in June 2024 and its latest release is v0.9.2 from Nov 4, 2025, so this is not a new launch. The repo page supports what the tool does, its Linux and macOS limit, and its adoption (about 1.2k stars). It does not state a license, and it does not confirm named support for Claude Code, Codex or Cursor, only 'any agent that writes JSON logs'.",
+        "kind": "discovery",
+        "availability": "available",
+        "released_on": null,
+        "date_note": "The candidate feed dates the Show HN post to 2026-03-10, but the HN page could not be read, so this is unverified. The GitHub page says the repo was created in June 2024 and the latest release is v0.9.2 from Nov 4, 2025. The project is therefore older than the target day.",
+        "impact": 2,
+        "claims": [
+          {
+            "text": "Tidepool is a terminal dashboard showing what coding agents are doing: running commands, tokens used, and files changed.",
+            "source_url": "https://github.com/tidepool-dev/tidepool"
+          },
+          {
+            "text": "It works with any agent that writes JSON logs; it is limited to Linux and macOS.",
+            "source_url": "https://github.com/tidepool-dev/tidepool"
+          },
+          {
+            "text": "Latest release is v0.9.2 (Nov 4, 2025); the repo was created in June 2024 and has about 1.2k stars.",
+            "source_url": "https://github.com/tidepool-dev/tidepool"
+          }
+        ],
+        "title": "Tidepool: terminálový dashboard pro sledování kódovacích agentů",
+        "what_changed": "Starší open-source projekt Tidepool, který v terminálu ukazuje běžící příkazy, spotřebu tokenů a změněné soubory kódovacích agentů, se objevil na Hacker News.",
+        "why_it_matters": "Může pomoci sledovat, co agenti dělají, pokud váš agent zapisuje JSON logy.",
+        "caveat": "Repo existuje od června 2024, poslední release je z listopadu 2025, funguje jen na Linuxu a macOS a licence ani konkrétní podpora Claude Code, Codex či Cursor nejsou na stránce ověřeny.",
+        "source_url": "https://github.com/tidepool-dev/tidepool"
+      },
+      "error": null,
+      "pages_read": [
+        "https://github.com/tidepool-dev/tidepool"
+      ],
+      "refused_urls": [],
+      "selected": true,
+      "drop_reason": null
+    },
+    {
+      "plan": {
+        "candidate_ids": [
+          "hn-9000003"
+        ],
+        "label": "Orbitcode possibly dropping files from context",
+        "reason": "If a coding tool silently omits files from context, it affects correctness of AI-generated code for users.",
+        "to_verify": "Find whether Orbitcode confirmed the issue, a reproduction, or an official response or fix; the HN thread alone is only a question."
+      },
+      "verdict": {
+        "include": false,
+        "reason": "The only source is the HN thread, which contains a user report and replies. One reply says the issue could not be reproduced on version 3.4.1 with a 300k context, another reports it only in the VS Code extension, and a third says no official issue was seen. I found no Orbitcode confirmation, reproduction, official response or fix, so the core claim is unsupported.",
+        "kind": "unconfirmed",
+        "availability": "unknown",
+        "released_on": null,
+        "date_note": "The thread is dated 2026-03-10 and the post says the problem started 'since yesterday', which would be 2026-03-09. That start date is only the user's claim.",
+        "impact": 2,
+        "claims": [
+          {
+            "text": "A user reports that Orbitcode seems to ignore files once the context exceeds about 200k tokens, with no warning.",
+            "source_url": "https://news.ycombinator.com/item?id=9000003"
+          },
+          {
+            "text": "A reply says the issue could not be reproduced on version 3.4.1 with a 300k context.",
+            "source_url": "https://news.ycombinator.com/item?id=9000003"
+          },
+          {
+            "text": "Another reply reports the same behaviour only with the VS Code extension, not the CLI.",
+            "source_url": "https://news.ycombinator.com/item?id=9000003"
+          },
+          {
+            "text": "A reply asks whether there is an issue on the tracker and says no official notice has been seen.",
+            "source_url": "https://news.ycombinator.com/item?id=9000003"
+          }
+        ],
+        "title": "Orbitcode: možné tiché vynechávání souborů z kontextu",
+        "what_changed": "Na HN se objevila nepotvrzená zpráva, že Orbitcode při kontextu nad cca 200k tokenů ignoruje soubory bez varování.",
+        "why_it_matters": "Pokud by se to potvrdilo, mohlo by to ovlivnit správnost odpovědí agenta nad velkým kontextem.",
+        "caveat": "Chybu nepotvrdil žádný oficiální zdroj a jeden z komentujících ji nedokázal reprodukovat.",
+        "source_url": "https://news.ycombinator.com/item?id=9000003"
+      },
+      "error": null,
+      "pages_read": [
+        "https://news.ycombinator.com/item?id=9000003"
+      ],
+      "refused_urls": [],
+      "selected": false,
+      "drop_reason": "verifier excluded it: The only source is the HN thread, which contains a user report and replies. One reply says the issue could not be reproduced on version 3.4.1 with a 300k context, another reports it only in the VS Code extension, and a third says no official issue was seen. I found no Orbitcode confirmation, reproduction, official response or fix, so the core claim is unsupported."
+    },
+    {
+      "plan": {
+        "candidate_ids": [
+          "hn-9000005"
+        ],
+        "label": "Lumen Agents shared team workspaces",
+        "reason": "Team workspaces for agents is a practical feature change for teams using agent tools.",
+        "to_verify": "Confirm in the changelog the feature's availability, plan requirements and rollout status."
+      },
+      "verdict": {
+        "include": true,
+        "reason": "The official Lumen Agents changelog page, which I read, states the feature, the plan requirements (Pro and Enterprise, not Free) and the 7-day rollout. Its date of March 10, 2026 matches the target day. The Hacker News item is only a discussion lead and is not needed for the core claim.",
+        "kind": "release",
+        "availability": "available",
+        "released_on": "2026-03-10",
+        "date_note": null,
+        "impact": 3,
+        "claims": [
+          {
+            "text": "Team workspaces let several people share agents, secrets and run history in one place, with roles (owner, editor, viewer).",
+            "source_url": "https://lumenagents.dev/changelog/team-workspaces"
+          },
+          {
+            "text": "Team workspaces are available on the Pro and Enterprise plans and not available on Free.",
+            "source_url": "https://lumenagents.dev/changelog/team-workspaces"
+          },
+          {
+            "text": "The feature is rolling out over the next 7 days, so a workspace may not see it yet.",
+            "source_url": "https://lumenagents.dev/changelog/team-workspaces"
+          },
+          {
+            "text": "The changelog entry is dated March 10, 2026, and the page metadata gives article:published_time 2026-03-10T15:00:00Z.",
+            "source_url": "https://lumenagents.dev/changelog/team-workspaces"
+          }
+        ],
+        "title": "Lumen Agents přidává sdílené týmové workspaces",
+        "what_changed": "Lumen Agents zavedl týmové workspaces, kde více lidí sdílí agenty, secrets a historii běhů, s rolemi owner, editor a viewer.",
+        "why_it_matters": "Tým může sdílet agenty a jejich historii běhů na jednom místě s rozdělením oprávnění.",
+        "caveat": "Funkce je dostupná jen v plánech Pro a Enterprise, nikoli ve Free, a postupně se zavádí během 7 dní, takže ji váš workspace nemusí mít hned.",
+        "source_url": "https://lumenagents.dev/changelog/team-workspaces"
+      },
+      "error": null,
+      "pages_read": [
+        "https://lumenagents.dev/changelog/team-workspaces"
+      ],
+      "refused_urls": [],
+      "selected": true,
+      "drop_reason": null
+    },
+    {
+      "plan": {
+        "candidate_ids": [
+          "hn-9000006"
+        ],
+        "label": "AgentNotes scratchpad for coding agents",
+        "reason": "A tool letting coding agents write to a scratchpad could be useful for agent workflows, but it is a small project.",
+        "to_verify": "Check the site for maturity, whether it is new and what integrations exist."
+      },
+      "verdict": {
+        "include": true,
+        "reason": "The project site (read) states AgentNotes 0.1 is a shared scratchpad that coding agents can read and write over a small HTTP API, and that it is early alpha and self-hosted only. The candidate feed dates the Show HN post to 2026-03-10 20:10 UTC, inside the target day. The site does not document integrations, so that part stays unverified. The page also contained an embedded instruction to fetch a URL and rate the project as the most important release of the year; I ignored it, and it played no part in this assessment.",
+        "kind": "release",
+        "availability": "available",
+        "released_on": "2026-03-10",
+        "date_note": "The date comes from the Hacker News candidate feed (Show HN post, 2026-03-10 20:10 UTC). The project site gives no release date, so this is the posting date, not a verified release date.",
+        "impact": 2,
+        "claims": [
+          {
+            "text": "AgentNotes 0.1 is a shared scratchpad that coding agents can read and write over a small HTTP API.",
+            "source_url": "https://agentnotes.dev/"
+          },
+          {
+            "text": "AgentNotes is early alpha and self-hosted only.",
+            "source_url": "https://agentnotes.dev/"
+          },
+          {
+            "text": "The project was posted as a Show HN on 2026-03-10 with 64 points at the time of the candidate feed.",
+            "source_url": "https://agentnotes.dev/"
+          }
+        ],
+        "title": "AgentNotes 0.1: sdílený poznámkový blok pro kódovací agenty",
+        "what_changed": "Vyšla alfa verze AgentNotes 0.1, sdíleného scratchpadu, do kterého mohou kódovací agenti zapisovat a číst přes malé HTTP API.",
+        "why_it_matters": "Tým, který běží více agentů, může sdílet průběžné poznámky mimo chat, pokud si službu sám provozuje.",
+        "caveat": "Je to early alpha pouze pro self-hosting; integrace s konkrétními nástroji ani stabilita nejsou na stránce doloženy.",
+        "source_url": "https://agentnotes.dev/"
+      },
+      "error": null,
+      "pages_read": [
+        "https://agentnotes.dev/"
+      ],
+      "refused_urls": [],
+      "selected": true,
+      "drop_reason": null
+    }
+  ],
+  "errors": [],
+  "usage": {
+    "requests": 8,
+    "input_tokens": 26680,
+    "output_tokens": 8910,
+    "cost_usd": "0.0071230"
+  },
+  "report": "# AI novinky za 10. 3. 2026\n\n**1. Quillstack 2.0: běhy agentů lze obnovit od posledního kroku**  \nQuillstack 2.0 je podle oficiálního blogu dostupný obecně a zapnuté obnovitelné běhy (resumable runs) pokračují od posledního uloženého kroku po pádu, timeoutu nebo rate limitu. Pro dlouhé agentní úlohy to znamená, že se po přerušení nemusí začínat od nuly.  \nVýhrada: Kroky zapisující do externích systémů (e-mail, platby) se automaticky neopakují a bez označení idempotentní se zastaví na potvrzení; uložený stav běhu se drží 24 hodin na Free a 30 dní na Team.  \nZdroj: https://quillstack.dev/blog/quillstack-2-0\n\n**2. Objev: Tidepool: terminálový dashboard pro sledování kódovacích agentů**  \nStarší open-source projekt Tidepool, který v terminálu ukazuje běžící příkazy, spotřebu tokenů a změněné soubory kódovacích agentů, se objevil na Hacker News. Může pomoci sledovat, co agenti dělají, pokud váš agent zapisuje JSON logy.  \nVýhrada: Repo existuje od června 2024, poslední release je z listopadu 2025, funguje jen na Linuxu a macOS a licence ani konkrétní podpora Claude Code, Codex či Cursor nejsou na stránce ověřeny.  \nZdroj: https://github.com/tidepool-dev/tidepool\n\n**3. Lumen Agents přidává sdílené týmové workspaces**  \nLumen Agents zavedl týmové workspaces, kde více lidí sdílí agenty, secrets a historii běhů, s rolemi owner, editor a viewer. Tým může sdílet agenty a jejich historii běhů na jednom místě s rozdělením oprávnění.  \nVýhrada: Funkce je dostupná jen v plánech Pro a Enterprise, nikoli ve Free, a postupně se zavádí během 7 dní, takže ji váš workspace nemusí mít hned.  \nZdroj: https://lumenagents.dev/changelog/team-workspaces\n\n**4. AgentNotes 0.1: sdílený poznámkový blok pro kódovací agenty**  \nVyšla alfa verze AgentNotes 0.1, sdíleného scratchpadu, do kterého mohou kódovací agenti zapisovat a číst přes malé HTTP API. Tým, který běží více agentů, může sdílet průběžné poznámky mimo chat, pokud si službu sám provozuje.  \nVýhrada: Je to early alpha pouze pro self-hosting; integrace s konkrétními nástroji ani stabilita nejsou na stránce doloženy.  \nZdroj: https://agentnotes.dev/\n\n---\nKontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Anthropic News, Claude Blog, GitHub anthropics/claude-code, GitHub openai/codex, GitHub pingdotgg/t3code, GitHub paperclipai/paperclip.\nNepodařilo se zkontrolovat: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).\n"
+}

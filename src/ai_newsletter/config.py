@@ -4,7 +4,16 @@ from dataclasses import dataclass
 from typing import Literal
 from zoneinfo import ZoneInfo
 
+from pydantic_ai.models.openrouter import OpenRouterModelSettings
+
 MODEL = "openrouter:anthropic/claude-haiku-5.5"
+# One upstream provider for the whole conversation: the model's thinking blocks are signed by the
+# provider that made them, and OpenRouter switching provider between a tool call and the answer
+# makes the next request fail. No prompt logging for training (the inputs are public pages anyway).
+# if Anthropic's endpoint is down, model steps fail and the run reports it as partial/failed
+MODEL_SETTINGS = OpenRouterModelSettings(
+    openrouter_provider={"only": ["anthropic"], "allow_fallbacks": False, "data_collection": "deny"}
+)
 TIMEZONE = ZoneInfo("Europe/Prague")
 
 MAX_ITEMS = 7  # items in the report, at most

@@ -12,7 +12,7 @@ from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.toolsets import FunctionToolset
 
 from ai_newsletter import days
-from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_FETCHES_PER_EVENT, MODEL, OFFICIAL_CHANGELOGS
+from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_FETCHES_PER_EVENT, MODEL, MODEL_SETTINGS, OFFICIAL_CHANGELOGS
 from ai_newsletter.models import Candidate, EventPlan, HistoryItem, Triage, Verdict
 from ai_newsletter.web import Page, Web, page_text
 
@@ -33,6 +33,7 @@ AUDIENCE = (
 
 triage_agent = Agent(
     MODEL,
+    model_settings=MODEL_SETTINGS,
     defer_model_check=True,  # the API key is needed only when the model is called, not on import
     output_type=Triage,
     instructions=(
@@ -81,6 +82,7 @@ class VerifyDeps:
 
 verifier = Agent(
     MODEL,
+    model_settings=MODEL_SETTINGS,
     defer_model_check=True,
     deps_type=VerifyDeps,
     output_type=Verdict,

@@ -119,7 +119,7 @@ async def _private_address(url: str) -> str | None:
         infos = await asyncio.to_thread(socket.getaddrinfo, host, 443)
     except OSError:
         return None  # the request itself will fail with a clear error
-    # ponytail: checked before the request, not pinned to it (DNS rebinding); fine for a read-only allowlist
+    # checked before the request, not pinned to it (DNS rebinding); fine for a read-only allowlist
     if any(not ipaddress.ip_address(info[4][0]).is_global for info in infos):
         return f"host {host} resolves to a private address"
     return None

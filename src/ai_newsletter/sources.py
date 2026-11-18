@@ -66,7 +66,7 @@ def _pick_day(items: list[Candidate], day: date) -> list[Candidate]:
     if not dated:
         raise SourceError("found no dated items; the page layout may have changed")
     oldest = min(days.day_of(item.published) for item in dated)
-    # ponytail: a GitHub repo whose very first release is on the target day is reported as maybe cut too
+    # a GitHub repo whose very first release is on the target day is reported as maybe cut too
     if oldest >= day:
         raise SourceError(f"the oldest item listed is from {oldest}, so {day} may not be fully covered")
     return [item for item in dated if days.day_of(item.published) == day]
@@ -133,7 +133,7 @@ def _rss_date(value: str | None) -> datetime | date | None:
     if not value:
         return None
     published = parsedate_to_datetime(value)
-    # ponytail: midnight UTC is read as "only the day is known" (OpenAI and Cursor publish it so);
+    # midnight UTC is read as "only the day is known" (OpenAI and Cursor publish it so);
     # a real post at exactly 00:00:00 UTC would lose its time, harmless for daily grouping
     if published.hour == published.minute == published.second == 0:
         return published.date()

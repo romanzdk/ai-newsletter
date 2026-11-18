@@ -3,7 +3,7 @@ name = "ai-newsletter"
 version = "0.1.0"
 description = "A short, verified daily digest of practical AI news (Pydantic AI + Braintrust)"
 authors = [
-    { name = "Roman Žydyk", email = "romanzdk@gmail.com" }
+    { name = "Roman Žydyk" }
 ]
 requires-python = ">=3.13"
 dependencies = [

@@ -19,6 +19,8 @@ def main() -> None:
     args = parser.parse_args()
 
     day = args.day or days.yesterday()
+    if day > days.yesterday():
+        parser.error(f"{day} is not over yet in Prague; the latest full day is {days.yesterday()}")
     folder = asyncio.run(run_day(day, args.data_dir, replay_from=args.replay, agentic=not args.single_pass))
     record = RunRecord.model_validate_json((folder / "run.json").read_text())
     print(record.report)

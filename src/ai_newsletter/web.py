@@ -16,7 +16,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 from pydantic import BaseModel
 
-from ai_newsletter.config import ALLOWED_HOSTS, MAX_DOWNLOAD_BYTES, MAX_PAGE_CHARS, USER_AGENT
+from ai_newsletter.config import ALLOWED_HOSTS, MAX_PAGE_CHARS, USER_AGENT
 
 MAX_REDIRECTS = 5
 
@@ -36,21 +36,22 @@ class Page(BaseModel):
 
 
 class Web:
-    def __init__(self, snapshot: dict[str, Page] | None = None, *, live: bool):
-        self.live = live
+    """Live when created without a snapshot; replay (no network at all) when given one."""
+
+    def __init__(self, snapshot: dict[str, Page] | None = None):
+        self.live = snapshot is None
         self.pages: dict[str, Page] = dict(snapshot or {})  # saved as snapshot.json at the end of the run
         self.extra_hosts: set[str] = set()
 
     def allow_hosts_of(self, urls: list[str]) -> None:
-        self.extra_hosts |= {urlsplit(url).hostname or "" for url in urls}
+        self.extra_hosts |= {_host(url) for url in urls}
 
     def refusal(self, url: str) -> str | None:
         """Why this URL may not be read, or None when it may."""
-        parts = urlsplit(url)
-        if parts.scheme != "https":
+        if not url.startswith("https://"):
             return "only https is allowed"
-        if parts.hostname not in ALLOWED_HOSTS | self.extra_hosts:
-            return f"host {parts.hostname} is not on the allowlist"
+        if (host := _host(url)) not in ALLOWED_HOSTS | self.extra_hosts:
+            return f"host {host} is not on the allowlist"
         return None
 
     async def get(self, url: str) -> Page:
@@ -59,62 +60,65 @@ class Web:
         if not self.live:
             return self.pages.get(url) or Page(url=url, error="not in the saved snapshot")
         if url not in self.pages:
-            self.pages[url] = await _download(url, self.refusal)
+            self.pages[url] = await self._download(url)
         return self.pages[url]
 
-
-async def _download(url: str, refusal) -> Page:
-    """GET with manual redirects, so every hop is checked against the allowlist."""
-    requested = url
-    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=20) as client:
-        for _ in range(MAX_REDIRECTS + 1):
-            if reason := refusal(url) or await _private_address(url):
-                return Page(url=requested, final_url=url, error=f"refused: {reason}")
-            try:
-                status, content_type, body, location = await _request(client, url)
-            except httpx.HTTPError as error:
-                return Page(url=requested, final_url=url, error=f"{type(error).__name__}: {error}")
-            if location:
-                url = urljoin(url, location)
-                continue
-            error = None if status == 200 else f"HTTP {status}"
-            return Page(
-                url=requested,
-                final_url=url,
-                status=status,
-                content_type=content_type,
-                body=body,
-                fetched_at=datetime.now(UTC),
-                error=error,
-            )
-    return Page(url=requested, final_url=url, error="too many redirects")
-
-
-async def _request(client: httpx.AsyncClient, url: str) -> tuple[int, str, str, str | None]:
-    """One request, retried once on 429/5xx or a network error."""
-    for attempt in (1, 2):
-        try:
-            async with client.stream("GET", url) as response:
-                if response.status_code in (429, 500, 502, 503, 504) and attempt == 1:
-                    await asyncio.sleep(min(float(response.headers.get("retry-after", 2)), 10))
+    async def _download(self, url: str) -> Page:
+        """GET with manual redirects, so every hop is checked against the allowlist."""
+        requested = url
+        async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=20) as client:
+            for _ in range(MAX_REDIRECTS + 1):
+                if reason := self.refusal(url) or await _private_address(url):
+                    return Page(url=requested, final_url=url, error=f"refused: {reason}")
+                try:
+                    response = await _get(client, url)
+                except httpx.HTTPError as error:
+                    return Page(url=requested, final_url=url, error=f"{type(error).__name__}: {error}")
+                if response.is_redirect:
+                    url = urljoin(url, response.headers["location"])
                     continue
-                body = b""
-                async for chunk in response.aiter_bytes():
-                    body += chunk
-                    if len(body) > MAX_DOWNLOAD_BYTES:
-                        break  # the model sees only the start of a page anyway
-                location = response.headers.get("location") if response.is_redirect else None
-                text = body.decode(response.encoding or "utf-8", errors="replace")
-                return response.status_code, response.headers.get("content-type", ""), text, location
-        except httpx.TransportError:
-            if attempt == 2:
-                raise
-            await asyncio.sleep(2)
-    raise AssertionError("unreachable")
+                return Page(
+                    url=requested,
+                    final_url=url,
+                    status=response.status_code,
+                    content_type=response.headers.get("content-type", ""),
+                    body=response.text,
+                    fetched_at=datetime.now(UTC),
+                    error=None if response.status_code == 200 else f"HTTP {response.status_code}",
+                )
+        return Page(url=requested, final_url=url, error="too many redirects")
+
+
+def _host(url: str) -> str:
+    try:
+        return urlsplit(url).hostname or ""
+    except ValueError:  # e.g. "https://[broken"
+        return ""
+
+
+async def _get(client: httpx.AsyncClient, url: str) -> httpx.Response:
+    """GET, retried once after a network error, 429 or 5xx."""
+    try:
+        response = await client.get(url)
+        if response.status_code not in (429, 500, 502, 503, 504):
+            return response
+        wait = _seconds(response.headers.get("retry-after"))
+    except httpx.TransportError:
+        wait = 2
+    await asyncio.sleep(wait)
+    return await client.get(url)
+
+
+def _seconds(retry_after: str | None) -> float:
+    """Retry-After in seconds, capped at 10; it can also be an HTTP date, then we wait 2 s."""
+    try:
+        return min(float(retry_after or 2), 10)
+    except ValueError:
+        return 2
 
 
 async def _private_address(url: str) -> str | None:
-    host = urlsplit(url).hostname or ""
+    host = _host(url)
     try:
         infos = await asyncio.to_thread(socket.getaddrinfo, host, 443)
     except OSError:

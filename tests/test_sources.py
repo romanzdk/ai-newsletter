@@ -1,25 +1,14 @@
 import json
 from datetime import date
 
-import pytest
-
 from ai_newsletter.config import Source
-from ai_newsletter.sources import (
-    SourceError,
-    _pick_day,
-    collect,
-    github_releases,
-    hacker_news,
-    hn_search_url,
-    html_listing,
-    rss,
-)
+from ai_newsletter.sources import _collect_one, collect, hacker_news, hn_search_url
 from ai_newsletter.web import Page, Web
 from tests.helpers import DEMO_DAY, demo_web
 
 
 def web_with(url: str, body: str) -> Web:
-    return Web({url: Page(url=url, status=200, body=body)}, live=False)
+    return Web({url: Page(url=url, status=200, body=body)})
 
 
 def feed(*items: tuple[str, str]) -> str:
@@ -38,15 +27,18 @@ async def test_rss_keeps_items_of_the_day_and_reads_midnight_as_date_only():
         ("timed", "Tue, 10 Mar 2026 15:30:00 GMT"),
         ("old", "Mon, 02 Mar 2026 00:00:00 GMT"),
     )
-    found = _pick_day(await rss(web_with(RSS.url, body), RSS, DEMO_DAY), DEMO_DAY)
+    found, coverage = await _collect_one(web_with(RSS.url, body), RSS, DEMO_DAY)
+    assert coverage.ok
     assert [c.title for c in found] == ["new", "timed"]
     assert type(found[0].published) is date
 
 
-async def test_a_feed_that_no_longer_reaches_the_day_is_an_error_not_a_quiet_day():
-    body = feed(("newer", "Fri, 13 Mar 2026 10:00:00 GMT"))
-    with pytest.raises(SourceError, match="may not be fully covered"):
-        _pick_day(await rss(web_with(RSS.url, body), RSS, DEMO_DAY), DEMO_DAY)
+async def test_a_feed_that_no_longer_reaches_the_day_is_a_gap_not_a_quiet_day():
+    body = feed(("same day", "Tue, 10 Mar 2026 10:00:00 GMT"), ("newer", "Fri, 13 Mar 2026 10:00:00 GMT"))
+    found, coverage = await _collect_one(web_with(RSS.url, body), RSS, DEMO_DAY)
+    assert not coverage.ok
+    assert "may not be fully covered" in coverage.error
+    assert [c.title for c in found] == ["same day"]  # what was found is still used
 
 
 async def test_listing_pages_take_the_date_shown_next_to_each_link():
@@ -56,7 +48,7 @@ async def test_listing_pages_take_the_date_shown_next_to_each_link():
         '<div><a href="/blog/older-post">Older post Mar 2, 2026</a></div>'
         '<a href="/blog/category">Category</a>'
     )
-    found = _pick_day(await html_listing(web_with(source.url, page), source, DEMO_DAY), DEMO_DAY)
+    found, _ = await _collect_one(web_with(source.url, page), source, DEMO_DAY)
     assert [(c.title, c.url) for c in found] == [("New feature", "https://claude.com/blog/new-feature")]
 
 
@@ -91,7 +83,7 @@ async def test_github_releases_skip_drafts_and_mark_prereleases():
             "body": "",
         },
     ]
-    found = _pick_day(await github_releases(web_with(source.url, json.dumps(releases)), source, DEMO_DAY), DEMO_DAY)
+    found, _ = await _collect_one(web_with(source.url, json.dumps(releases)), source, DEMO_DAY)
     assert [c.title for c in found] == ["org/tool v1.1 (pre-release)"]
 
 
@@ -104,7 +96,7 @@ async def test_hacker_news_reads_every_page():
         )
         for n in (0, 1)
     }
-    found = await hacker_news(Web(pages, live=False), source, DEMO_DAY)
+    found = await hacker_news(Web(pages), source, DEMO_DAY)
     assert [c.id for c in found] == ["hn-0", "hn-1"]
     assert found[0].url == "https://news.ycombinator.com/item?id=0"  # Ask HN: the discussion is the link
 

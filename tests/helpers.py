@@ -15,7 +15,7 @@ DEMO_DAY = date(2026, 3, 10)
 
 
 def demo_web() -> Web:
-    return Web(load_snapshot(DEMO_RUN), live=False)
+    return Web(load_snapshot(DEMO_RUN))
 
 
 def answer(output: dict) -> FunctionModel:
@@ -69,3 +69,9 @@ QUILLSTACK_EVENT = {
     ],
     "skipped": [{"candidate_ids": ["hn-9000004"], "reason": "funding news"}],
 }
+
+
+def events(count: int) -> dict:
+    """A triage answer with `count` events about the demo's Quillstack story."""
+    plan = QUILLSTACK_EVENT["events"][0]
+    return {"events": [plan | {"label": f"event {n}"} for n in range(1, count + 1)]}

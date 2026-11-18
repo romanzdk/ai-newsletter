@@ -21,22 +21,24 @@ made up (see [below](#try-it-without-api-keys-or-the-live-web)):
 ```markdown
 # AI novinky za 10. 3. 2026
 
-**1. Quillstack 2.0: běhy agentů lze obnovit od posledního kroku**
-Quillstack 2.0 je dostupný a obnovitelné běhy agentů (resumable runs), které byly v betě od verze 1.8,
-jsou nyní stabilní a zapnuté ve výchozím nastavení. Běh přerušený pádem, timeoutem nebo rate limitem
-pokračuje od posledního uloženého kroku místo startu od začátku.
-Výhrada: Kroky zapisující do externích systémů (např. e-mail nebo platba) se automaticky nepřehrávají,
-takže je nutné je označit jako idempotentní; ...
-Zdroj: https://github.com/quillstack/quillstack/releases/tag/v2.0.0
+**1. Quillstack 2.0: resumable runs jsou stabilní a výchozí**
+Quillstack 2.0 je vydán jako generally available a obnovení běhů agenta od posledního uloženého kroku je
+ve verzi 2.0 stabilní a zapnuté ve výchozím nastavení. Běh agenta přerušený pádem, timeoutem nebo rate
+limitem může pokračovat od posledního uloženého kroku místo restartu od začátku.
+Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky a uložený stav běhu se drží
+jen 24 hodin na Free plánu a 30 dní na Team plánu.
+Zdroj: https://quillstack.dev/blog/quillstack-2-0
 
-**2. Objev: Tidepool: terminál dashboard pro coding agenty**
+**2. Objev: Tidepool: terminálový dashboard pro coding agenty**
+Na Hacker News se objevil open-source projekt Tidepool, ...
 ...
 ---
 Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, ...
-Nepodařilo se zkontrolovat: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).
+Mezery v pokrytí: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).
 ```
 
-On the same day the app left out an unconfirmed "Orbitcode drops files" rumour, a funding story, an
+Item 2 shows the main known failure: the page never says Tidepool is "open-source"; the model
+added it. On the same day the app left out an unconfirmed "Orbitcode drops files" rumour, a funding story, an
 unrelated story, and a page with a hidden instruction telling AI systems to rank it first. The
 [full report](examples/demo-run/report.md) and [run record](examples/demo-run/run.json) show the
 reason for each decision.
@@ -56,10 +58,10 @@ flowchart LR
 
 | Step | Who | What happens |
 |---|---|---|
-| Collect | code | Reads every source for the target day: a **calendar day in Prague**, not the last 24 h. A source that fails or no longer lists that day is recorded as a gap, not taken as a quiet day. |
+| Collect | code | Reads every source for the target day: a **calendar day in Prague**, not the last 24 h. A source that fails, or no longer lists the whole day, is recorded as a gap, not taken as a quiet day. |
 | Triage | model | Groups links about the same event, drops what is irrelevant or already reported, and says what to check. |
-| Verify | model | Reads the event's pages and decides: what changed, when, stable or preview, who can use it, what the limits are. It may **read up to 4 more pages** when a key fact is missing (the agentic part). Every source it cites must be a page it actually read, checked in code. |
-| Select | code | Drops events that are not new, not confirmed, already reported or dated outside the day, then keeps the top 7 by impact. |
+| Verify | model | Reads the event's pages and decides: what changed, when, stable or preview, who can use it, what the limits are. It may **read up to 4 more pages** when a key fact is missing (the agentic part). For an included item, every cited URL must be a page it actually read (or the source's own feed text), checked in code. Whether the page really supports the claim is what the evals measure. |
+| Select | code | Drops events that are not new, not confirmed, already reported, repeated in the same report or dated outside the day (the day before still counts, see [limits](#known-limits-and-failures)), then keeps the top 7 by impact. |
 | Report + save | code | Writes the Czech report and a full record of the run, including every page read, so the run can be reviewed and replayed. |
 
 The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py), so start there.
@@ -68,7 +70,8 @@ The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py), so start th
 
 - **complete**: every source was read and every chosen event was verified.
 - **partial**: a report exists, but something is missing. The report names it, for example
-  "Nepodařilo se zkontrolovat: OpenAI News (HTTP 503)".
+  "Mezery v pokrytí: OpenAI News (HTTP 503)". If no event could be verified at all, the run is
+  failed, not a quiet day.
 - **failed**: no usable result. The report says so, and earlier good runs are kept untouched.
 
 ### Safety
@@ -77,9 +80,12 @@ Web pages are untrusted input. The rules below are enforced **in code**, not onl
 
 - The model's only tool reads a web page. There is no shell, no file access and no write action.
 - Only `https` and allowlisted hosts ([`config.py`](src/ai_newsletter/config.py)), plus the hosts of
-  that day's candidate links. Every redirect hop and private IP addresses are checked too.
-- Each event has a read budget, and each run has a cost limit (`RUN_COST_LIMIT_USD`). When the limit
-  is reached, the run stops and reports what it could not verify. It does not make one more call.
+  that day's candidate links (so a popular HN story opens its own site to the read tool for that run).
+  Every redirect hop is checked, and so are private IP addresses. A link inside a page does not widen
+  the allowlist.
+- Each event has a read budget. Each run has a cost limit (`RUN_COST_LIMIT_USD`) and a request cap. The
+  cost is checked after each model response, so the last call can go slightly over. After that the
+  run verifies nothing more and the report lists what stayed unverified.
 - Paywalls, logins and CAPTCHAs are not bypassed. A page that refuses the request counts as unread.
 
 ## Quick start
@@ -88,7 +94,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.13.
 
 ```bash
 uv sync
-uv run pytest                     # 29 offline tests, no API key needed
+uv run pytest                     # 30 offline tests, no API key needed
 ```
 
 ### Try it without API keys or the live web
@@ -109,10 +115,11 @@ sources only get placeholder items there, so no real company is quoted with made
 ```bash
 uv run ai-newsletter                        # yesterday (Prague time)
 uv run ai-newsletter --day 2026-11-17       # a chosen day
-uv run ai-newsletter --replay data/runs/2026-11-17/<run>    # same inputs again, no web access
+uv run ai-newsletter --replay data/runs/2026-11-17/<run>    # same pages again, no web access
 uv run ai-newsletter --single-pass          # baseline: the model may not read extra pages
 ```
 
+History ("already reported?") always comes from the earlier days in `--data-dir`, also on a replay.
 Each run gets its own folder, and nothing is overwritten:
 
 ```
@@ -169,15 +176,16 @@ Triage: 1.00 on finding, grouping and skipping in both splits.
 
 **What this says:** reading one more page when a fact is missing helps where the condition is on a
 linked page (availability, waitlist, quota). It costs about 30% more per event. The decision to
-include or exclude was the same for both variants. Scores vary between runs (20 cases × 3 trials is
-small), so read them as a signal. Concrete failures are listed below and in
+include or exclude was the same for both variants. On the faithfulness judge the picture is mixed: on
+the dev split single-pass scored 1.00 and agentic 0.93. Scores vary between runs (20 cases × 3 trials
+is small), and the judge is the same model as the writer, so read them as a signal. Concrete failures are listed below and in
 [`evals/RESULTS.md`](evals/RESULTS.md).
 
 ## What has been verified
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 29 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist and redirects, retries, history, statuses, cost limit, report format. |
+| Offline, fictional data, fake models | 30 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history, statuses, usage limit, duplicates, report format. |
 | Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
 | Live public sources | Real runs for 2026-11-16 and 2026-11-17, all 9 sources read, complete reports, replays from the saved snapshots. |
 | Delivery | None. The app only writes local files. |
@@ -192,7 +200,14 @@ small), so read them as a signal. Concrete failures are listed below and in
   Anthropic News and Claude Blog (HTML listing pages, so a layout change shows up as a gap), and
   GitHub releases of 4 repos. No Reddit, no other blogs, no GitHub Trending.
 - **Dates:** OpenAI and Cursor feeds publish only the day, and its time zone is unknown. A release
-  dated the day before the target day is still accepted, and history catches the repeat.
+  dated the day before the target day is still accepted, and history catches the repeat. On listing
+  pages without a feed, a link takes the nearest date shown on the page, which can be a neighbour's.
+  An item whose official source shows no date passes the date check; its caveat should say so.
+- **History is thin:** it remembers the published items' titles, kinds and source URLs. A repeat at a
+  different URL is caught only if triage recognises it from the titles. Days without a run are gaps
+  in that memory.
+- **Read means downloaded:** a login or paywall page that answers with HTTP 200 counts as read; the
+  model is told to treat it as missing evidence, but the code does not check.
 - **Replays of old days:** HN points are today's points, and pages fetched today may have changed
   since the target day. A live run of an old day cannot rebuild what was known then.
 - **Model provider:** all model calls go to Anthropic through OpenRouter. If that endpoint is down,

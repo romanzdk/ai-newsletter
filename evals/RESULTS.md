@@ -24,7 +24,7 @@ caveat check on an item that was rightly left out.
 | caveat_kept (LLM judge) | 1.00 | 0.75 | 1.00 | 0.73 |
 | faithful (LLM judge) | 0.93 | 1.00 | 0.91 | 0.73 |
 | model requests per case | 1.29 | 1.00 | 1.29 | 1.00 |
-| extra pages read per case | 0.29 | 0 | 0.43 | 0 |
+| read-tool calls per case | 0.29 | 0 | 0.43 | 0 |
 | cost per case | $0.00096 | $0.00073 | $0.00087 | $0.00065 |
 
 Triage: `found`, `grouped` and `skipped_noise` were 1.00 on both splits.
@@ -54,7 +54,7 @@ What went wrong, and what was done about it:
 ## Single-pass vs agentic
 
 Both variants get the same pages. The only difference is that the agentic one may read up to 4 more
-pages. It does so in about a third of the cases, and only those cases improve: the condition
+pages. It uses the read tool in about a third of the cases, and only those cases improve: the condition
 (beta, waitlist, quota) sits on a page linked from the announcement. The include/exclude decision was
 the same for both. The agentic run costs about 30% more per event.
 

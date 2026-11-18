@@ -18,13 +18,18 @@ from pydantic_ai.usage import RunUsage, UsageLimits
 
 from ai_newsletter import days, report, store
 from ai_newsletter.agents import FETCH_TOOL, VerifyDeps, triage_agent, triage_prompt, verifier, verify_prompt
-from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_ITEMS, MODEL, RUN_COST_LIMIT_USD
-from ai_newsletter.models import Candidate, EventPlan, EventResult, HistoryItem, RunRecord, Usage
+from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_ITEMS, MAX_REQUESTS_PER_RUN, MODEL, RUN_COST_LIMIT_USD
+from ai_newsletter.models import Candidate, EventPlan, EventResult, HistoryItem, RunRecord, Skip, Usage
 from ai_newsletter.sources import collect
 from ai_newsletter.web import Web
 
 PREFETCH_PER_EVENT = 3  # the event's own links, read before the model starts
-LIMITS = UsageLimits(cost_limit=Decimal(str(RUN_COST_LIMIT_USD)), request_limit=None)  # for the whole run
+# For the whole run. The cost limit needs the provider to report cost (OpenRouter does); the request
+# cap is a safety net in case it does not.
+LIMITS = UsageLimits(cost_limit=Decimal(str(RUN_COST_LIMIT_USD)), request_limit=MAX_REQUESTS_PER_RUN)
+
+
+BUDGET_SPENT = "run usage limit reached"
 
 
 class RunFailed(Exception):
@@ -37,7 +42,7 @@ async def run_day(day: date, data_dir: Path, replay_from: Path | None = None, ag
     replay_from: a previous run folder; its saved pages are used instead of the live web.
     agentic: False gives the single-pass baseline, which may not read any extra page.
     """
-    web = Web(store.load_snapshot(replay_from) if replay_from else None, live=replay_from is None)
+    web = Web(store.load_snapshot(replay_from) if replay_from else None)
     start, end = days.window(day)
     record = RunRecord(
         day=day,
@@ -51,6 +56,8 @@ async def run_day(day: date, data_dir: Path, replay_from: Path | None = None, ag
     usage = RunUsage()
     try:
         await _run(record, web, store.load_history(data_dir, day), usage, agentic)
+        if record.events and all(event.error for event in record.events):
+            raise RunFailed("no event could be verified")
         problems = any(not c.ok for c in record.coverage) or any(e.error for e in record.events)
         record.status = "partial" if problems else "complete"
     except (RunFailed, AgentRunError) as error:
@@ -79,9 +86,16 @@ async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: R
     triage = await triage_agent.run(
         triage_prompt(record.day, record.candidates, history), deps=set(by_id), usage=usage, usage_limits=LIMITS
     )
+    plans = triage.output.events
     record.skipped = triage.output.skipped
+    record.skipped += [
+        Skip(candidate_ids=p.candidate_ids, reason="over the verification limit") for p in plans[MAX_EVENTS_TO_VERIFY:]
+    ]
 
-    for plan in triage.output.events[:MAX_EVENTS_TO_VERIFY]:
+    for plan in plans[:MAX_EVENTS_TO_VERIFY]:
+        if any(event.error and event.error.startswith(BUDGET_SPENT) for event in record.events):
+            record.events.append(EventResult(plan=plan, error=f"{BUDGET_SPENT} before this event"))
+            continue
         candidates = [by_id[candidate_id] for candidate_id in plan.candidate_ids]
         record.events.append(await verify_event(plan, candidates, record.day, web, history, usage, agentic))
     select(record.events, record.day, history)
@@ -108,7 +122,7 @@ async def verify_event(
         )
         result.verdict = run.output
     except UsageLimitExceeded as error:
-        result.error = f"run cost limit reached: {error}"
+        result.error = f"{BUDGET_SPENT}: {error}"
     except AgentRunError as error:
         result.error = f"{type(error).__name__}: {error}"
     result.pages_read = [url for url, page in deps.pages.items() if page.ok]
@@ -119,7 +133,7 @@ async def verify_event(
 def select(events: list[EventResult], day: date, history: list[HistoryItem]) -> None:
     """Step 7-8 in code: drop what is not new, already reported or weak, keep the top MAX_ITEMS."""
     reported = {item.source_url for item in history}
-    keep = []
+    keep, kept_sources = [], set()
     for event in events:
         verdict = event.verdict
         if verdict is None:
@@ -130,6 +144,8 @@ def select(events: list[EventResult], day: date, history: list[HistoryItem]) -> 
             event.drop_reason = f"kind is {verdict.kind}"
         elif verdict.source_url in reported:
             event.drop_reason = "already reported in an earlier digest"
+        elif verdict.source_url in kept_sources:
+            event.drop_reason = "same source as another item in this report"
         # Vendors date posts in US time, so the day before still counts; a repeat is caught by history.
         elif (
             verdict.kind != "discovery" and verdict.released_on and not day - timedelta(1) <= verdict.released_on <= day
@@ -137,6 +153,7 @@ def select(events: list[EventResult], day: date, history: list[HistoryItem]) -> 
             event.drop_reason = f"released on {verdict.released_on}, not on the target day"
         else:
             keep.append(event)
+            kept_sources.add(verdict.source_url)
     keep.sort(key=lambda event: (event.verdict.kind == "discovery", -event.verdict.impact))
     for rank, event in enumerate(keep):
         event.selected = rank < MAX_ITEMS

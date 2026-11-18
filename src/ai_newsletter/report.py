@@ -14,8 +14,9 @@ def render(record: RunRecord) -> str:
         return f"{title}\n\nKontrola nebyla dokončena, přehled za tento den není k dispozici.\nDůvod: {reasons}\n"
 
     items = [event.verdict for event in record.events if event.selected and event.verdict]
+    unverified = [event.plan.label for event in record.events if event.error]
     parts = [title, ""]
-    if not items:
+    if not items and not unverified:
         parts += ["V prověřených zdrojích nebylo nic podstatného.", ""]
     for number, item in enumerate(items, 1):
         label = "Objev: " if item.kind == "discovery" else ""
@@ -29,8 +30,7 @@ def render(record: RunRecord) -> str:
     parts.append(f"Kontrola: {STATUS[record.status]}. Zdroje: {', '.join(c.source for c in record.coverage if c.ok)}.")
     gaps = [f"{c.source} ({c.error})" for c in record.coverage if not c.ok]
     if gaps:
-        parts.append(f"Nepodařilo se zkontrolovat: {'; '.join(gaps)}.")
-    unverified = [event.plan.label for event in record.events if event.error]
+        parts.append(f"Mezery v pokrytí: {'; '.join(gaps)}.")
     if unverified:
         parts.append(f"Neověřeno ({len(unverified)}): {'; '.join(unverified)}.")
     return "\n".join(parts) + "\n"

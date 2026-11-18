@@ -43,7 +43,7 @@ def case_web(case: VerifyCase) -> Web:
         else Page(url=url, status=200, body=body, content_type="text/html")
         for url, body in case.pages.items()
     }
-    web = Web(pages, live=False)
+    web = Web(pages)
     web.allow_hosts_of([candidate.url for candidate in case.candidates])
     return web
 
@@ -54,7 +54,7 @@ def verify_task(agentic: bool):
         usage = RunUsage()
         result = await verify_event(case.event, case.candidates, case.day, case_web(case), case.history, usage, agentic)
         select([result], case.day, case.history)
-        cost = {"requests": usage.requests, "page_reads": usage.tool_calls, "cost_usd": float(usage.cost or 0)}
+        cost = {"requests": usage.requests, "read_tool_calls": usage.tool_calls, "cost_usd": float(usage.cost or 0)}
         return result.model_dump(mode="json") | {"usage": cost}
 
     return task

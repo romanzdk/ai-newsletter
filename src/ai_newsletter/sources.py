@@ -34,19 +34,31 @@ async def collect(web: Web, day: date) -> tuple[list[Candidate], list[SourceCove
 
 
 async def _collect_one(web: Web, source: Source, day: date) -> tuple[list[Candidate], SourceCoverage]:
-    readers = {
-        "hacker_news": hacker_news,
-        "rss": rss,
-        "html_listing": html_listing,
-        "github_releases": github_releases,
-    }
     try:
-        found = await readers[source.kind](web, source, day)
-        if source.kind != "hacker_news":  # the HN search already returns just the target day
-            found = _pick_day(found, day)
+        items = await READERS[source.kind](web, source, day)
     except (SourceError, ValueError, KeyError, TypeError, ElementTree.ParseError) as error:
         return [], SourceCoverage(source=source.name, url=source.url, ok=False, error=str(error))
-    return found, SourceCoverage(source=source.name, url=source.url, ok=True, candidates=len(found))
+    found = [item for item in items if item.published and days.day_of(item.published) == day]
+    # The HN search is by date; the other sources list only their newest items and can cut the day off.
+    gap = None if source.kind == "hacker_news" else _coverage_gap(items, day)
+    return found, SourceCoverage(source=source.name, url=source.url, ok=gap is None, candidates=len(found), error=gap)
+
+
+def _coverage_gap(items: list[Candidate], day: date) -> str | None:
+    """Why the source may not show the whole target day, or None when it does.
+
+    Feeds and listing pages show only the newest N items. If even the oldest one is from the
+    target day or later, older items of that day may have dropped off: say so, don't guess.
+    The items that were found are still used.
+    """
+    dated = [item.published for item in items if item.published]
+    if not dated:
+        return "found no dated items; the page layout may have changed"
+    oldest = min(days.day_of(published) for published in dated)
+    # A GitHub repo whose very first release is on the target day is reported as possibly cut too.
+    if oldest >= day:
+        return f"the oldest item listed is from {oldest}, so {day} may not be fully covered"
+    return None
 
 
 async def _read(web: Web, url: str) -> str:
@@ -54,22 +66,6 @@ async def _read(web: Web, url: str) -> str:
     if not page.ok:
         raise SourceError(f"{url}: {page.error}")
     return page.body
-
-
-def _pick_day(items: list[Candidate], day: date) -> list[Candidate]:
-    """Items of the target day, after checking the source still lists that day at all.
-
-    Feeds and listing pages show only the newest N items. If even the oldest one is from the
-    target day or later, older items of that day may have dropped off: say so, don't guess.
-    """
-    dated = [item for item in items if item.published]
-    if not dated:
-        raise SourceError("found no dated items; the page layout may have changed")
-    oldest = min(days.day_of(item.published) for item in dated)
-    # a GitHub repo whose very first release is on the target day is reported as maybe cut too
-    if oldest >= day:
-        raise SourceError(f"the oldest item listed is from {oldest}, so {day} may not be fully covered")
-    return [item for item in dated if days.day_of(item.published) == day]
 
 
 def _id(prefix: str, url: str) -> str:
@@ -107,6 +103,8 @@ async def hacker_news(web: Web, source: Source, day: date) -> list[Candidate]:
                 )
             )
         if page + 1 >= data["nbPages"]:
+            if not found:  # every real day has popular stories; an empty answer means something broke
+                raise SourceError("the search returned no stories at all")
             return found
     raise SourceError(f"more than {HN_MAX_PAGES} pages of results; the rest was not read")
 
@@ -209,3 +207,6 @@ async def github_releases(web: Web, source: Source, day: date) -> list[Candidate
 def _release_title(repo: str, release: dict) -> str:
     title = f"{repo} {release.get('name') or release['tag_name']}"
     return f"{title} (pre-release)" if release["prerelease"] else title
+
+
+READERS = {"hacker_news": hacker_news, "rss": rss, "html_listing": html_listing, "github_releases": github_releases}

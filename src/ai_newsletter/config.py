@@ -1,4 +1,4 @@
-"""Every setting of the app in one place. There is no config file: change the value here."""
+"""The settings you are most likely to change. There is no config file: change the value here."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -12,7 +12,8 @@ MODEL = "openrouter:anthropic/claude-haiku-5.5"
 # makes the next request fail. No prompt logging for training (the inputs are public pages anyway).
 # if Anthropic's endpoint is down, model steps fail and the run reports it as partial/failed
 MODEL_SETTINGS = OpenRouterModelSettings(
-    openrouter_provider={"only": ["anthropic"], "allow_fallbacks": False, "data_collection": "deny"}
+    openrouter_provider={"only": ["anthropic"], "allow_fallbacks": False, "data_collection": "deny"},
+    timeout=120,  # seconds per model request
 )
 TIMEZONE = ZoneInfo("Europe/Prague")
 
@@ -20,12 +21,12 @@ MAX_ITEMS = 7  # items in the report, at most
 MAX_EVENTS_TO_VERIFY = 10  # events the triage step may send to verification
 MAX_FETCHES_PER_EVENT = 4  # extra pages the verifier may read for one event
 RUN_COST_LIMIT_USD = 0.50  # one run stops calling the model once it has spent this much
+MAX_REQUESTS_PER_RUN = 80  # model requests in one run, a safety net next to the cost limit
 HISTORY_DAYS = 14  # how far back the "already reported?" check looks
 
 HN_MIN_POINTS = 20  # Hacker News stories with fewer points are not even considered
 
 MAX_PAGE_CHARS = 15_000  # what the model sees of one page; longer pages are cut and marked as cut
-MAX_DOWNLOAD_BYTES = 10_000_000
 USER_AGENT = "ai-newsletter/0.1 (+https://github.com/romanzdk/ai-newsletter)"
 
 

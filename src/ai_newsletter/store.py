@@ -5,7 +5,7 @@
         run.json       everything needed to review it (RunRecord)
         snapshot.json  every page read, so the run can be replayed
 
-History (what earlier digests already said) is the latest successful live run of each earlier day.
+History (what earlier digests already said) is the latest successful agentic live run of each earlier day.
 A failed run is saved too, but never replaces a good one.
 """
 
@@ -51,8 +51,11 @@ def load_history(data_dir: Path, before: date) -> list[HistoryItem]:
 
 
 def _latest_good_live_run(day_folder: Path) -> RunRecord | None:
-    for run_json in sorted(day_folder.glob("*-live/run.json"), reverse=True):
-        record = RunRecord.model_validate_json(run_json.read_text())
+    for run_json in sorted(day_folder.glob("*-agentic-live/run.json"), reverse=True):
+        try:
+            record = RunRecord.model_validate_json(run_json.read_text())
+        except ValueError:  # unreadable or from an older version of the app: skip it, don't block every run
+            continue
         if record.status != "failed":
             return record
     return None

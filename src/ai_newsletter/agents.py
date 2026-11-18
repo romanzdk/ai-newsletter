@@ -61,8 +61,7 @@ def _known_ids(ctx: RunContext[set[str]], triage: Triage) -> Triage:
 def triage_prompt(day: date, candidates: list[Candidate], history: list[HistoryItem]) -> str:
     lines = [f"Target day: {day} (Europe/Prague).", "", "Candidates:"]
     for c in candidates:
-        points = f", {c.points} HN points" if c.points is not None else ""
-        lines.append(f"- [{c.id}] {c.title} ({c.source}{points}) {c.url}")
+        lines.append(f"- [{c.id}] {c.title} ({_origin(c)}) {c.url}")
         if c.summary:
             lines.append(f"  summary: {c.summary[:300]}")
     return "\n".join(lines + ["", _history_text(history)])
@@ -96,6 +95,7 @@ verifier = Agent(
         "affecting everyone. A new discussion of an old project is not a new release; a repository being "
         "created is not a launch; an announcement is not availability. Never invent a date or time: if the "
         "sources don't say, released_on is null; if they disagree, say so in date_note. "
+        "A login, paywall, cookie or error page is not the content: treat that page as unread. "
         "A candidate's summary comes from the source's own feed or API: it is evidence for exactly what it says, "
         "and you may cite the candidate URL for it even when the full page could not be read. "
         "Include an important event when its core claim (what changed, that it is available) is supported by an "
@@ -153,14 +153,18 @@ def verify_prompt(
         "Candidates found for this event:",
     ]
     for c in candidates:
-        points = f", {c.points} HN points" if c.points is not None else ""
-        lines.append(f"- {c.title} ({c.source}{points}, published {c.published or 'unknown'}) {c.url}")
+        lines.append(f"- {c.title} ({_origin(c)}, published {c.published or 'unknown'}) {c.url}")
         if c.discussion_url and c.discussion_url != c.url:
             lines.append(f"  discussion: {c.discussion_url}")
     lines += ["", "Summaries from the sources' feeds and APIs:"]
     lines += [f'<page url="{url}" part="summary">\n{text}\n</page>' for url, text in deps.summaries.items()]
     lines += ["", "Pages already read:", *[_page_block(page) for page in deps.pages.values()]]
     return "\n".join(lines + ["", _history_text(history)])
+
+
+def _origin(candidate: Candidate) -> str:
+    points = f", {candidate.points} HN points" if candidate.points is not None else ""
+    return candidate.source + points
 
 
 def _page_block(page: Page) -> str:

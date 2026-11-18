@@ -9,17 +9,18 @@ from ai_newsletter.web import Page, Web, html_to_text, page_text
 
 
 def test_only_https_and_allowlisted_hosts():
-    web = Web(live=False)
+    web = Web({})
     assert web.refusal("https://github.com/x/y") is None
     assert "https" in web.refusal("http://github.com/x/y")
     assert "allowlist" in web.refusal("https://evil.example/steal")
+    assert "allowlist" in web.refusal("https://[broken")  # a malformed URL from a page or the model
     web.allow_hosts_of(["https://quillstack.dev/blog/post"])
     assert web.refusal("https://quillstack.dev/docs") is None
 
 
 async def test_replay_answers_only_from_the_snapshot():
     saved = Page(url="https://github.com/a", status=200, body="hi")
-    web = Web({saved.url: saved}, live=False)
+    web = Web({saved.url: saved})
     assert (await web.get("https://github.com/a")).body == "hi"
     assert (await web.get("https://github.com/b")).error == "not in the saved snapshot"
     assert (await web.get("https://evil.example/")).error.startswith("refused")
@@ -42,14 +43,14 @@ def fake_internet(monkeypatch):
 
 async def test_a_redirect_to_a_host_off_the_allowlist_is_refused(fake_internet):
     fake_internet(lambda request: httpx.Response(302, headers={"location": "https://evil.example/x"}))
-    page = await Web(live=True).get("https://github.com/start")
+    page = await Web().get("https://github.com/start")
     assert not page.ok
     assert "evil.example" in page.error
 
 
 async def test_live_pages_are_kept_for_replay(fake_internet):
     fake_internet(lambda request: httpx.Response(200, text="<p>hello</p>", headers={"content-type": "text/html"}))
-    web = Web(live=True)
+    web = Web()
     page = await web.get("https://github.com/x")
     assert page.ok and web.pages["https://github.com/x"] == page
 
@@ -66,7 +67,7 @@ async def test_server_errors_are_retried_once(fake_internet, monkeypatch):
 
     monkeypatch.setattr(web_module.asyncio, "sleep", no_wait)
     fake_internet(handler)
-    assert (await Web(live=True).get("https://github.com/x")).ok
+    assert (await Web().get("https://github.com/x")).ok
     assert len(calls) == 2
 
 

@@ -6,8 +6,8 @@ A short daily digest of **practical AI news for developers**, in Czech. Every it
 against its source**, placed on the **right day**, and comes with the **conditions that matter**
 (paid plan, preview, region).
 
-It is a personal and demo project, not a hosted service. It reads public sources, writes a local
-Markdown report, and never publishes or sends anything.
+It is a personal and demo project, not a hosted service. It reads public sources and writes a local
+Markdown report. It sends the report only when asked to, to your own Telegram chat.
 
 > **Why not just "RSS + summary"?** A plain summary repeats one event from five sites, sells a
 > re-posted old project as new, turns "announced" into "available", and drops the small print.
@@ -110,7 +110,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.13.
 
 ```bash
 uv sync
-uv run pytest                     # 31 offline tests, no API key needed
+uv run pytest                     # 36 offline tests, no API key needed
 ```
 
 ### Try it without API keys or the live web
@@ -147,6 +147,30 @@ data/runs/2026-11-17/20261118T184438-agentic-live/
 
 A run takes about 2–3 minutes and costs about **$0.02–0.03** with Claude Haiku 5.5 (measured from
 OpenRouter's own usage counter).
+
+### Send it to Telegram
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and send the bot any message.
+2. Find your chat id: write to [@userinfobot](https://t.me/userinfobot), or open
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id`. The bot can be one you
+   already use elsewhere: this app only sends, it never reads the bot's messages.
+3. Run with `--telegram`:
+
+```bash
+export TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=...
+uv run ai-newsletter --telegram                                  # run yesterday and send it
+uv run python -m ai_newsletter.telegram data/runs/2026-11-17/<run>   # send an earlier run
+```
+
+Delivery is kept apart from the pipeline ([`telegram.py`](src/ai_newsletter/telegram.py)) and sends
+**at most one report per day**. Its state is in `data/runs/<day>/telegram.json`. A clear refusal from
+Telegram (e.g. rate limit) can be retried. If the connection breaks mid-send, nothing is sent again
+automatically: check the chat, then delete `telegram.json` to send again. Replays and single-pass runs
+are never sent. A failed run sends its short "Kontrola nebyla dokončena" note, not an empty digest.
+
+For a daily digest, run `uv run ai-newsletter --telegram` from cron or a systemd timer after midnight
+Prague time (the original target was 08:00). Keep the same `data/` folder between runs: it is the
+app's memory.
 
 ## Evaluation
 
@@ -201,10 +225,10 @@ is small), and the judge is the same model as the writer, so read them as a sign
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 31 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
+| Offline, fictional data, fake models | 36 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
 | Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
 | Live public sources | Real runs for 2026-11-16 and 2026-11-17, all 9 sources read, complete reports, replays from the saved snapshots. |
-| Delivery | None. The app only writes local files. |
+| Delivery | Telegram: 5 offline tests with a fake Telegram API (send once per day, retry only a clear refusal, no blind resend after a broken connection, no token on disk, message splitting) and one real send to a private chat. |
 
 ## Known limits and failures
 
@@ -228,8 +252,8 @@ is small), and the judge is the same model as the writer, so read them as a sign
   since the target day. A live run of an old day cannot rebuild what was known then.
 - **Model provider:** all model calls go to Anthropic through OpenRouter. If that endpoint is down,
   the run is partial or failed. It does not fall back to another model.
-- **Not built yet:** the "Trend týdne" weekly section, corrections of past reports, scheduling and
-  delivery.
+- **Not built yet:** the "Trend týdne" weekly section, corrections of past reports, scheduling
+  (left to cron on the server) and e-mail delivery.
 
 ## Project layout
 
@@ -245,6 +269,7 @@ Suggested reading order:
 | [`days.py`](src/ai_newsletter/days.py) | The Prague calendar day |
 | [`store.py`](src/ai_newsletter/store.py) | Run folders and history |
 | [`report.py`](src/ai_newsletter/report.py) | The Czech Markdown report |
+| [`telegram.py`](src/ai_newsletter/telegram.py) | Sending a report to Telegram, once per day |
 | [`config.py`](src/ai_newsletter/config.py) | Every setting: model, sources, limits, allowlist |
 | [`evals/`](evals) | Eval cases and the Braintrust runner |
 | [`tests/`](tests) | Offline tests with fake models |

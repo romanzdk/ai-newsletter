@@ -110,6 +110,14 @@ class Usage(BaseModel):
     cost_usd: Decimal = Decimal(0)
 
 
+class Rejection(BaseModel):
+    """A link turned down on its content, so later runs know it was already judged."""
+
+    day: date
+    url: str
+    reason: str
+
+
 Status = Literal["complete", "partial", "failed"]
 
 
@@ -128,6 +136,7 @@ class RunRecord(BaseModel):
     coverage: list[SourceCoverage] = []
     candidates: list[Candidate] = []
     skipped: list[Skip] = []
+    rejected: list[Rejection] = []
     events: list[EventResult] = []
     errors: list[str] = []
     usage: Usage = Usage()

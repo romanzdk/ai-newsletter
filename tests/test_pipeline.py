@@ -7,6 +7,7 @@ that is what evals/ measures.
 from datetime import date, timedelta
 
 import pytest
+from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import UsageLimits
 
 from ai_newsletter import pipeline, store
@@ -115,3 +116,27 @@ async def test_history_drops_items_already_reported_and_ignores_failed_runs(tmp_
 
     record = await run(tmp_path, QUILLSTACK_EVENT, answer(verdict()))
     assert record.events[0].drop_reason == "already reported in an earlier digest"
+
+
+async def test_rejected_links_are_remembered_and_shown_to_the_next_days_triage(tmp_path):
+    rumour = verdict(include=False, kind="unconfirmed", reason="Only a blog post, no official source.")
+    first = await run(tmp_path / "scratch", QUILLSTACK_EVENT, answer(rumour))
+    assert {r.url for r in first.rejected} == {
+        "https://quillstack.dev/blog/quillstack-2-0",  # the event the verifier turned down
+        "https://anas-devlog.net/quillstack-2-first-look",
+        "https://wire-news.net/mainframe-ai-series-c",  # skipped in triage
+    }
+    yesterday = date(2026, 3, 9)
+    rejected = [r.model_copy(update={"day": yesterday}) for r in first.rejected]
+    store.save(tmp_path, first.model_copy(update={"day": yesterday, "mode": "live", "rejected": rejected}), {})
+
+    prompts = []
+
+    def remember_prompt(messages, info):
+        prompts.append(messages[0].parts[0].content)
+        return answer({"events": []}).function(messages, info)
+
+    with triage_agent.override(model=FunctionModel(remember_prompt)):
+        await pipeline.run_day(DEMO_DAY, tmp_path, replay_from=DEMO_RUN)
+    assert "rejected earlier (2026-03-09): Only a blog post, no official source." in prompts[0]
+    assert "rejected earlier (2026-03-09): funding news" in prompts[0]

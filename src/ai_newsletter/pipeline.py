@@ -19,7 +19,7 @@ from pydantic_ai.usage import RunUsage, UsageLimits
 from ai_newsletter import days, report, store
 from ai_newsletter.agents import FETCH_TOOL, VerifyDeps, triage_agent, triage_prompt, verifier, verify_prompt
 from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_ITEMS, MAX_REQUESTS_PER_RUN, MODEL, RUN_COST_LIMIT_USD
-from ai_newsletter.models import Candidate, EventPlan, EventResult, HistoryItem, RunRecord, Skip, Usage
+from ai_newsletter.models import Candidate, EventPlan, EventResult, HistoryItem, Rejection, RunRecord, Skip, Usage
 from ai_newsletter.sources import collect
 from ai_newsletter.web import Web
 
@@ -30,6 +30,7 @@ LIMITS = UsageLimits(cost_limit=Decimal(str(RUN_COST_LIMIT_USD)), request_limit=
 
 
 BUDGET_SPENT = "run usage limit reached"
+OVER_LIMIT = "over the verification limit"
 
 
 class RunFailed(Exception):
@@ -55,7 +56,8 @@ async def run_day(day: date, data_dir: Path, replay_from: Path | None = None, ag
     )
     usage = RunUsage()
     try:
-        await _run(record, web, store.load_history(data_dir, day), usage, agentic)
+        history, rejected = store.load_history(data_dir, day), store.load_rejections(data_dir, day)
+        await _run(record, web, history, rejected, usage, agentic)
         if record.events and all(event.error for event in record.events):
             raise RunFailed("no event could be verified")
         problems = any(not c.ok for c in record.coverage) or any(e.error for e in record.events)
@@ -74,7 +76,14 @@ async def run_day(day: date, data_dir: Path, replay_from: Path | None = None, ag
     return store.save(data_dir, record, web.pages)
 
 
-async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: RunUsage, agentic: bool) -> None:
+async def _run(
+    record: RunRecord,
+    web: Web,
+    history: list[HistoryItem],
+    rejected: dict[str, Rejection],
+    usage: RunUsage,
+    agentic: bool,
+) -> None:
     record.candidates, record.coverage = await collect(web, record.day)
     if not any(source.ok for source in record.coverage):
         raise RunFailed("no source could be read")
@@ -84,13 +93,14 @@ async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: R
         return
     by_id = {candidate.id: candidate for candidate in record.candidates}
     triage = await triage_agent.run(
-        triage_prompt(record.day, record.candidates, history), deps=set(by_id), usage=usage, usage_limits=LIMITS
+        triage_prompt(record.day, record.candidates, history, rejected),
+        deps=set(by_id),
+        usage=usage,
+        usage_limits=LIMITS,
     )
     plans = triage.output.events
     record.skipped = triage.output.skipped
-    record.skipped += [
-        Skip(candidate_ids=p.candidate_ids, reason="over the verification limit") for p in plans[MAX_EVENTS_TO_VERIFY:]
-    ]
+    record.skipped += [Skip(candidate_ids=p.candidate_ids, reason=OVER_LIMIT) for p in plans[MAX_EVENTS_TO_VERIFY:]]
 
     for plan in plans[:MAX_EVENTS_TO_VERIFY]:
         if any(event.error and event.error.startswith(BUDGET_SPENT) for event in record.events):
@@ -99,6 +109,7 @@ async def _run(record: RunRecord, web: Web, history: list[HistoryItem], usage: R
         candidates = [by_id[candidate_id] for candidate_id in plan.candidate_ids]
         record.events.append(await verify_event(plan, candidates, record.day, web, history, usage, agentic))
     select(record.events, record.day, history)
+    record.rejected = rejections(record)
 
 
 async def verify_event(
@@ -158,3 +169,23 @@ def select(events: list[EventResult], day: date, history: list[HistoryItem]) -> 
     for rank, event in enumerate(keep):
         event.selected = rank < MAX_ITEMS
         event.drop_reason = None if event.selected else f"not in the top {MAX_ITEMS}"
+
+
+def rejections(record: RunRecord) -> list[Rejection]:
+    """Links turned down on their content (by triage or by the verifier), to remember for later runs.
+
+    Not remembered: events that could not be verified, or lost only to the item limit; they were never judged.
+    """
+    decisions = [(skip.candidate_ids, skip.reason) for skip in record.skipped if skip.reason != OVER_LIMIT]
+    decisions += [
+        (event.plan.candidate_ids, event.verdict.reason)
+        for event in record.events
+        if event.verdict and (not event.verdict.include or event.verdict.kind in ("old_news", "unconfirmed"))
+    ]
+    urls = {candidate.id: candidate.url for candidate in record.candidates}
+    return [
+        Rejection(day=record.day, url=urls[candidate_id], reason=reason[:300])
+        for candidate_ids, reason in decisions
+        for candidate_id in candidate_ids
+        if candidate_id in urls
+    ]

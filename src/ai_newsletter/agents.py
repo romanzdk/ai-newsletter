@@ -13,7 +13,7 @@ from pydantic_ai.toolsets import FunctionToolset
 
 from ai_newsletter import days
 from ai_newsletter.config import MAX_EVENTS_TO_VERIFY, MAX_FETCHES_PER_EVENT, MODEL, MODEL_SETTINGS, OFFICIAL_CHANGELOGS
-from ai_newsletter.models import Candidate, EventPlan, HistoryItem, Triage, Verdict
+from ai_newsletter.models import Candidate, EventPlan, HistoryItem, Rejection, Triage, Verdict
 from ai_newsletter.web import Page, Web, page_text
 
 UNTRUSTED = (
@@ -43,7 +43,8 @@ triage_agent = Agent(
         "are one event). Keep clearly different updates apart, e.g. a stable release and a later fix. "
         "Judge by content, not keywords: an unknown product name can still be relevant. HN points show interest, "
         "not truth or importance. Skip events already reported earlier (see history) unless there is something "
-        "new, e.g. a stable release of a feature reported as preview. "
+        "new, e.g. a stable release of a feature reported as preview. A candidate marked 'rejected earlier' was "
+        "already judged on that day: skip it unless the title or summary shows something new since then. "
         f"Return at most {MAX_EVENTS_TO_VERIFY} events, most promising first. Return none on a quiet day. "
         f"{UNTRUSTED}"
     ),
@@ -58,12 +59,16 @@ def _known_ids(ctx: RunContext[set[str]], triage: Triage) -> Triage:
     return triage
 
 
-def triage_prompt(day: date, candidates: list[Candidate], history: list[HistoryItem]) -> str:
+def triage_prompt(
+    day: date, candidates: list[Candidate], history: list[HistoryItem], rejected: dict[str, Rejection]
+) -> str:
     lines = [f"Target day: {day} (Europe/Prague).", "", "Candidates:"]
     for c in candidates:
         lines.append(f"- [{c.id}] {c.title} ({_origin(c)}) {c.url}")
         if c.summary:
             lines.append(f"  summary: {c.summary[:300]}")
+        if earlier := rejected.get(c.url):
+            lines.append(f"  rejected earlier ({earlier.day}): {earlier.reason}")
     return "\n".join(lines + ["", _history_text(history)])
 
 

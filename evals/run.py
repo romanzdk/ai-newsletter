@@ -63,7 +63,7 @@ def verify_task(agentic: bool):
 async def triage_task(input: dict) -> dict:
     case = TRIAGE_BY_NAME[input["case"]]
     ids = {candidate.id for candidate in case.candidates}
-    run = await triage_agent.run(triage_prompt(case.day, case.candidates, case.history), deps=ids)
+    run = await triage_agent.run(triage_prompt(case.day, case.candidates, case.history, rejected={}), deps=ids)
     return run.output.model_dump()
 
 

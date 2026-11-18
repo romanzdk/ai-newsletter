@@ -74,6 +74,22 @@ The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py), so start th
   failed, not a quiet day.
 - **failed**: no usable result. The report says so, and earlier good runs are kept untouched.
 
+### Memory
+
+There is no database. Every run is saved as a folder of files, and before a run the app reads the
+latest successful live run of each of the last 14 days. From those it takes two things:
+
+- **Published items** (title, kind, source URL). Both models see them, so a repeat is skipped and a
+  stable release can say it follows an earlier preview. In code, an item whose source URL was already
+  published is dropped.
+- **Rejected links** with the reason, from triage and from verification. When the same link shows up
+  again, triage sees "rejected earlier (2026-11-16): …" and skips it unless there is something new.
+  This is a hint, not a hard filter in code: a repo URL rejected as an old project may later get a
+  real release.
+
+Links that were never judged (verification failed, or the item lost only to the 7-item limit) are not
+remembered as rejected.
+
 ### Safety
 
 Web pages are untrusted input. The rules below are enforced **in code**, not only in the prompt:
@@ -94,7 +110,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.13.
 
 ```bash
 uv sync
-uv run pytest                     # 30 offline tests, no API key needed
+uv run pytest                     # 31 offline tests, no API key needed
 ```
 
 ### Try it without API keys or the live web
@@ -185,7 +201,7 @@ is small), and the judge is the same model as the writer, so read them as a sign
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 30 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history, statuses, usage limit, duplicates, report format. |
+| Offline, fictional data, fake models | 31 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
 | Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
 | Live public sources | Real runs for 2026-11-16 and 2026-11-17, all 9 sources read, complete reports, replays from the saved snapshots. |
 | Delivery | None. The app only writes local files. |
@@ -203,9 +219,9 @@ is small), and the judge is the same model as the writer, so read them as a sign
   dated the day before the target day is still accepted, and history catches the repeat. On listing
   pages without a feed, a link takes the nearest date shown on the page, which can be a neighbour's.
   An item whose official source shows no date passes the date check; its caveat should say so.
-- **History is thin:** it remembers the published items' titles, kinds and source URLs. A repeat at a
-  different URL is caught only if triage recognises it from the titles. Days without a run are gaps
-  in that memory.
+- **Memory is thin:** it keeps published items (title, kind, URL) and rejected links (URL, reason),
+  not versions or claims. A repeat at a different URL is caught only if a model recognises it from
+  the titles. Days without a run are gaps in that memory.
 - **Read means downloaded:** a login or paywall page that answers with HTTP 200 counts as read; the
   model is told to treat it as missing evidence, but the code does not check.
 - **Replays of old days:** HN points are today's points, and pages fetched today may have changed

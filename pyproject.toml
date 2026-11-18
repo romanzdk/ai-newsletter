@@ -30,6 +30,9 @@ evals = [
     "openai>=3.55.1",
 ]
 
+[tool.uv]
+default-groups = ["dev", "evals"]
+
 [tool.ruff]
 line-length = 120
 

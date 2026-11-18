@@ -10,6 +10,7 @@ resolution-markers = [
 name = "ai-newsletter"
 version = "0.1.0"
 source = { editable = "." }
+default-groups = ["dev", "evals"]
 dependencies = [
     { name = "httpx" },
     { name = "pydantic-ai-slim", extra = ["openrouter"] },

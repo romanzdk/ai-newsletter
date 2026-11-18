@@ -11,6 +11,10 @@ tests: those check the program, these check the model's judgement.
 
 ## Final prompts (2026-11-18)
 
+Measured at commit `03e00cb`. Commit `08b67fa` later added one instruction line (treat login,
+paywall and error pages as unread) and code fixes that do not touch the eval path. That version
+has not been re-measured.
+
 Scores are the mean over trials. A scorer that does not apply to a case is skipped, for example the
 caveat check on an item that was rightly left out.
 

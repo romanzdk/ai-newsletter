@@ -148,6 +148,18 @@ data/runs/2026-11-17/20261118T184438-agentic-live/
 A run takes about 2–3 minutes and costs about **$0.02–0.03** with Claude Haiku 5.5 (measured from
 OpenRouter's own usage counter).
 
+**Compared with a general-purpose agent.** Before this project, the same digest was made by a general
+agent ([Hermes](https://github.com/NousResearch/hermes-agent) running Codex, with three sub-agents).
+A rough estimate for one day, with that run priced as if paid through the API:
+
+| | Tokens | Cost per digest | 30 days at the same rate |
+|---|---|---|---|
+| General agent | 509,232 input, 10,867,584 cached input, 60,919 output | about $2.71 (GPT-6.1 Sol list price, standard short-context rates) | about $81.43 |
+| This project | | $0.0246 (OpenRouter's usage counter) | about $0.74 |
+
+That is about 110 times cheaper. Treat it as a rough guide: it compares a single day, and the two runs
+did not cover exactly the same sources.
+
 ### Send it to Telegram
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and send the bot any message.

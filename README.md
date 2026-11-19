@@ -215,25 +215,28 @@ uv run python -m evals.run --split dev      # a few cents per split
 
 ### Results (Claude Haiku 5.5, 3 trials per case)
 
-| Holdout, final prompts | agentic | single-pass |
+| Holdout, current prompts | agentic | single-pass |
 |---|---|---|
 | Right include / exclude decision | 1.00 | 1.00 |
 | Kind of change (release, stable, discovery…) | 1.00 | 1.00 |
-| Availability (stable, beta, announced…) | **1.00** | 0.75 |
-| Key condition kept in the item | **1.00** | 0.73 |
-| Every statement supported (LLM judge) | **0.91** | 0.73 |
+| Availability (stable, beta, announced…) | **1.00** | 0.92 |
+| Key condition kept in the item | **0.92** | 0.70 |
+| Every statement supported (LLM judge) | 1.00 | 1.00 |
 | Date never invented | 1.00 | 1.00 |
 | Hidden instruction or rumour not repeated | 1.00 | 1.00 |
 | Model requests per event | 1.29 | 1.00 |
 | Cost per event | $0.0009 | $0.0007 |
 
-Triage: 1.00 on finding, grouping and skipping in both splits.
+Triage: 1.00 on finding and skipping in both splits, and on grouping in dev (the holdout has no event
+spread over several links).
 
 **What this says:** reading one more page when a fact is missing helps where the condition is on a
 linked page (availability, waitlist, quota). It costs about 30% more per event. The decision to
-include or exclude was the same for both variants. On the faithfulness judge the picture is mixed: on
-the dev split single-pass scored 1.00 and agentic 0.93. Scores vary between runs (20 cases × 3 trials
-is small), and the judge is the same model as the writer, so read them as a signal. Concrete failures are listed below and in
+include or exclude was the same for both variants. Since the items were cut to 8–15 words per field,
+the faithfulness judge finds no unsupported statements (before: 0.91 agentic, 0.73 single-pass). The
+cost: in one trial out of twelve, a short caveat kept one limit and dropped a second one. Scores vary
+between runs (20 cases × 3 trials is small), and the judge is the same model as the writer, so read
+them as a signal. Concrete failures are listed below and in
 [`evals/RESULTS.md`](evals/RESULTS.md).
 
 ## What has been verified
@@ -248,7 +251,8 @@ is small), and the judge is the same model as the writer, so read them as a sign
 ## Known limits and failures
 
 - **Small invented details.** The judge caught items that added facts the pages do not state (for
-  example "open-source" or "works without its own index"). Rare, but this is the main quality risk.
+  example "open-source" or "works without its own index"). Since the items were shortened, the last
+  eval run found none, but with 20 cases this is still the main quality risk.
 - **openai.com blocks automated readers** on most article pages (HTTP 403). The app uses the official
   RSS text, the API changelog and GitHub instead. It does not get around the block.
 - **Sources in v1:** Hacker News (stories with ≥ 20 points), OpenAI News RSS, Cursor changelog RSS,

@@ -9,12 +9,40 @@ tests: those check the program, these check the model's judgement.
   have **not yet been reviewed by a human**.
 - Full traces are stored in Braintrust (project `ai-newsletter`; the links need access to that account).
 
-## Final prompts (2026-11-18)
+## Current prompts: shorter items (2026-11-19)
+
+Measured at commit `ce1a755`. The Czech fields are capped at 8–15 words (title 8, what changed 15,
+why it matters 12, caveat 10); the reader opens the link for details. This also includes the
+login/paywall rule from `d540273`.
+
+| Score | dev agentic | dev single-pass | holdout agentic | holdout single-pass |
+|---|---|---|---|---|
+| decision (include or not) | 1.00 | 1.00 | 1.00 | 1.00 |
+| kind | 1.00 | 0.94 | 1.00 | 1.00 |
+| availability | 1.00 | 0.75 | 1.00 | 0.92 |
+| release_date | 1.00 | 1.00 | 1.00 | 1.00 |
+| forbidden_avoided | 1.00 | 1.00 | 1.00 | 1.00 |
+| caveat_kept (LLM judge) | 1.00 | 0.75 | 0.92 | 0.70 |
+| faithful (LLM judge) | 1.00 | 0.93 | 1.00 | 1.00 |
+| model requests per case | 1.25 | 1.00 | 1.29 | 1.00 |
+| read-tool calls per case | 0.46 | 0 | 0.38 | 0 |
+| cost per case | $0.00095 | $0.00073 | $0.00085 | $0.00066 |
+
+Triage: `found` and `skipped_noise` 1.00 on both splits; `grouped` 1.00 on dev (no holdout case has an
+event spread over several links, so it does not apply there).
+
+What changed against the longer items:
+
+- **faithful went up** (holdout agentic 0.91 → 1.00, single-pass 0.73 → 1.00). Fewer words leave less
+  room for invented details, which was the main open issue.
+- **caveat_kept went down once.** Holdout case "free plan with limits": the caveat said "Free plan má 100
+  hledání denně" but left out the second limit (repos over 2 GB are not indexed). 1 of 12 agentic
+  trials. The single-pass failures are the same as before: it did not read the limits page.
+
+## Earlier: longer items (2026-11-18)
 
 Measured at commit `b65e56b`. Commit `d540273` later added one instruction line (treat login,
-paywall and error pages as unread) and code fixes that do not touch the eval path. Commit
-"Shorter digest items" then capped the Czech fields at 8–15 words. These versions have not been
-re-measured.
+paywall and error pages as unread) and code fixes that do not touch the eval path. Both are measured in the section above.
 
 Scores are the mean over trials. A scorer that does not apply to a case is skipped, for example the
 caveat check on an item that was rightly left out.
@@ -32,7 +60,8 @@ caveat check on an item that was rightly left out.
 | read-tool calls per case | 0.29 | 0 | 0.43 | 0 |
 | cost per case | $0.00096 | $0.00073 | $0.00087 | $0.00065 |
 
-Triage: `found`, `grouped` and `skipped_noise` were 1.00 on both splits.
+Triage: `found` and `skipped_noise` were 1.00 on both splits, `grouped` 1.00 on dev (no holdout
+case for it).
 
 **How clean is the holdout?** Not fully. Holdout ran 5 times while the prompts were still changing.
 Most changes came from dev failures or infrastructure fixes, but the "no details the pages do not
@@ -48,7 +77,7 @@ What went wrong, and what was done about it:
 
 | Failure | Where | What was done |
 |---|---|---|
-| Item adds a detail that no page states ("bez vlastní indexace", "open-source", a US version) | holdout: condition on a linked page, region and plan limits; dev: hidden instruction | Rule added: no details the pages do not state. It still happens in about 1 of 10 published items; this is the main open issue. |
+| Item adds a detail that no page states ("bez vlastní indexace", "open-source", a US version) | holdout: condition on a linked page, region and plan limits; dev: hidden instruction | Rule added: no details the pages do not state. With the longer items it still happened in about 1 of 10 published items. After the items were shortened (2026-11-19) the last run had none; still the main thing to watch. |
 | Stable release written as if the feature were brand new, although it was in nightly before | dev: nightly then stable | Rule added: say when a stable release follows a preview or nightly. Passed in the next runs. |
 | The HN post date was used as the release date when the official page shows none | dev: unclear date | `released_on` now says "never the date of an HN or community post". Passed in the next runs. |
 | Old project labelled `unconfirmed` instead of `discovery` / `old_news` | dev: old project on HN | Left as it is: the item was still left out, which is what matters for the reader. |

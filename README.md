@@ -1,22 +1,69 @@
-<img src="assets/icon.svg" width="64" height="64" alt="">
+<div align="center">
+
+<img src="assets/icon.svg" width="80" height="80" alt="">
 
 # ai-newsletter
 
-A short daily digest of **practical AI news for developers**, in Czech. Every item is **checked
-against its source**, placed on the **right day**, and comes with the **conditions that matter**
-(paid plan, preview, region).
+**A short, verified daily digest of practical AI news for developers.**<br>
+Every item is checked against its source, placed on the right day,<br>
+and comes with the conditions that matter.
 
-It is a personal and demo project, not a hosted service. It reads public sources and writes a local
-Markdown report. It sends the report only when asked to, to your own Telegram chat.
+[![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![Pydantic AI](https://img.shields.io/badge/agents-Pydantic%20AI-E92063)](https://ai.pydantic.dev)
+[![Evals: Braintrust](https://img.shields.io/badge/evals-Braintrust-1F2937)](https://www.braintrust.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> **Why not just "RSS + summary"?** A plain summary repeats one event from five sites, sells a
-> re-posted old project as new, turns "announced" into "available", and drops the small print.
-> Here the main work is **choosing, checking and dating**, not summarising.
+[Example](#example) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Evaluation](#evaluation) · [Limits](#known-limits)
+
+</div>
+
+<br>
+
+## Why
+
+A plain "RSS + summary" gets the hard parts wrong. Here the main work is **choosing, checking and
+dating**, not summarising.
+
+| A plain summary… | This project… |
+|---|---|
+| repeats one event from five sites | groups them into **one item** |
+| sells a re-posted old project as new | labels it **"Objev"** (discovery) or leaves it out |
+| turns "announced" into "available" | says **stable, preview, beta or waitlist** |
+| drops the small print | keeps the key condition as **"Výhrada"** (caveat) |
+
+**At a glance**
+
+- 💰 **About $0.025 per day**, about 110× less than the general-purpose agent it replaced ([cost](#cost))
+- 🔎 **Checked in code:** an item may cite only pages the model actually read
+- 🧪 **Measured:** evals in Braintrust compare an agentic and a single-pass verifier ([evaluation](#evaluation))
+- 🔒 **Web pages are untrusted:** one read-only tool, host allowlist, hard cost limits ([safety](#safety))
+- 📬 **Delivered once a day** to Telegram, if you want it
+
+> [!NOTE]
+> A personal and demo project, not a hosted service. It reads public sources, writes a local
+> Markdown report, and sends it only when asked to, to your own Telegram chat. The digest is in
+> Czech; the code, prompts and docs are in English.
+
+<br>
+
+## Contents
+
+- [Example](#example)
+- [How it works](#how-it-works) · [Run status](#every-run-ends-with-an-honest-status) · [Memory](#memory) · [Safety](#safety)
+- [Quick start](#quick-start) · [Demo day](#1-try-it-on-the-demo-day) · [Real day](#2-run-it-on-a-real-day) · [Telegram](#3-send-it-to-telegram)
+- [Cost](#cost)
+- [Evaluation](#evaluation)
+- [What has been verified](#what-has-been-verified)
+- [Known limits](#known-limits)
+- [Project layout](#project-layout)
+- [Technology choices](#technology-choices)
+
+<br>
 
 ## Example
 
-From the fictional demo day in [`examples/demo-run`](examples/demo-run). Every product in it is
-made up (see [below](#try-it-without-api-keys-or-the-live-web)):
+The full report for the **fictional demo day** in [`examples/demo-run`](examples/demo-run). Every
+product in it is made up, so no real company is quoted with invented news.
 
 ```markdown
 # AI novinky za 10. 3. 2026
@@ -28,17 +75,31 @@ Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky
 Zdroj: https://github.com/quillstack/quillstack/releases/tag/v2.0.0
 
 **2. Lumen Agents přidává sdílené týmové workspaces**
-...
+Týmové workspaces sdílí agenty, tajemství a historii běhů s rolemi owner, editor, viewer.
+Týmová spolupráce na agentech, tajemstvích a bězích v jednom místě.
+Výhrada: Jen Pro a Enterprise; Free nemá; zavádění 7 dní.
+Zdroj: https://lumenagents.dev/changelog/team-workspaces
+
+**3. Objev: Tidepool: terminálový dashboard pro kódovací agenty**
+Terminálový dashboard zobrazuje příkazy, tokeny a změněné soubory kódovacích agentů.
+Přehled o činnosti agentů v terminálu; podporuje agenty s JSON logy.
+Výhrada: Pouze Linux a macOS; licence a instalace neověřeny.
+Zdroj: https://github.com/tidepool-dev/tidepool
+
 ---
-Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Latent Space, ...
+Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Latent Space, …
 Mezery v pokrytí: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).
 ```
 
-Items are short on purpose: the link has the details. On the same day the app left out an unconfirmed
-"Orbitcode drops files" rumour, a funding story, an unrelated story, and a page with a hidden
-instruction telling AI systems to rank it first. The
-[full report](examples/demo-run/report.md) and [run record](examples/demo-run/run.json) show the
-reason for each decision.
+Items are short on purpose: the link has the details. On the same day the app **left out**:
+
+- an unconfirmed "Orbitcode drops files" rumour,
+- a funding story and an unrelated story,
+- a page with a hidden instruction telling AI systems to rank it first.
+
+The [run record](examples/demo-run/run.json) gives the reason for every decision.
+
+<br>
 
 ## How it works
 
@@ -55,51 +116,52 @@ flowchart LR
 
 | Step | Who | What happens |
 |---|---|---|
-| Collect | code | Reads every source for the target day: a **calendar day in Prague**, not the last 24 h. A source that fails, or no longer lists the whole day, is recorded as a gap, not taken as a quiet day. |
-| Triage | model | Groups links about the same event, drops what is irrelevant or already reported, and says what to check. |
-| Verify | model | Reads the event's pages and decides: what changed, when, stable or preview, who can use it, what the limits are. It may **read up to 4 more pages** when a key fact is missing (the agentic part). For an included item, every cited URL must be a page it actually read (or the source's own feed text), checked in code. Whether the page really supports the claim is what the evals measure. |
-| Select | code | Drops events that are not new, not confirmed, already reported, repeated in the same report or dated outside the day (the day before still counts, see [limits](#known-limits-and-failures)), then keeps the top 7 by impact. |
-| Report + save | code | Writes the Czech report and a full record of the run, including every page read, so the run can be reviewed and replayed. |
+| **Collect** | code | Reads every source for the target day: a **calendar day in Prague**, not the last 24 h. A source that fails, or no longer lists the whole day, is a gap, not a quiet day. |
+| **Triage** | model | Groups links about the same event, drops what is irrelevant or already reported, and says what to check. |
+| **Verify** | model | Decides what changed, when, stable or preview, who can use it and the limits. May **read up to 4 more pages** when a key fact is missing (the agentic part). |
+| **Select** | code | Drops what is not new, not confirmed, already reported, a duplicate or dated outside the day. Keeps the top 7 by impact. |
+| **Report + save** | code | Writes the Czech report and a full record of the run, including every page read, so it can be reviewed and replayed. |
 
-The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py), so start there.
+The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py): start there.
 
 ### Every run ends with an honest status
 
-- **complete**: every source was read and every chosen event was verified.
-- **partial**: a report exists, but something is missing. The report names it, for example
-  "Mezery v pokrytí: OpenAI News (HTTP 503)". If no event could be verified at all, the run is
-  failed, not a quiet day.
-- **failed**: no usable result. The report says so, and earlier good runs are kept untouched.
+| Status | Meaning |
+|---|---|
+| `complete` | Every source was read and every chosen event was verified. |
+| `partial` | A report exists, but something is missing, and the report names it (e.g. *Mezery v pokrytí: OpenAI News (HTTP 503)*). |
+| `failed` | No usable result: the report says so, and earlier good runs are kept untouched. If no event could be verified at all, the run is failed, not a quiet day. |
 
 ### Memory
 
-There is no database. Every run is saved as a folder of files, and before a run the app reads the
-latest successful live run of each of the last 14 days. From those it takes two things:
+There is no database. Every run is a folder of files. Before a run, the app reads the latest
+successful live run of each of the **last 14 days** and takes two things from them:
 
 - **Published items** (title, kind, source URL). Both models see them, so a repeat is skipped and a
-  stable release can say it follows an earlier preview. In code, an item whose source URL was already
-  published is dropped.
-- **Rejected links** with the reason, from triage and from verification. When the same link shows up
-  again, triage sees "rejected earlier (2026-11-16): …" and skips it unless there is something new.
-  This is a hint, not a hard filter in code: a repo URL rejected as an old project may later get a
-  real release.
+  stable release can say it follows an earlier preview. In code, an already published source URL is
+  dropped.
+- **Rejected links** with their reason. When a link shows up again, triage sees
+  *"rejected earlier (2026-11-16): …"* and skips it unless there is something new. This is a hint, not
+  a hard filter: a repo rejected as an old project may later get a real release.
 
-Links that were never judged (verification failed, or the item lost only to the 7-item limit) are not
-remembered as rejected.
+Links that were never judged (verification failed, or the item lost only to the 7-item limit) are
+not remembered as rejected.
 
 ### Safety
 
-Web pages are untrusted input. The rules below are enforced **in code**, not only in the prompt:
+Web pages are untrusted input. These rules are enforced **in code**, not only in the prompt:
 
-- The model's only tool reads a web page. There is no shell, no file access and no write action.
-- Only `https` and allowlisted hosts ([`config.py`](src/ai_newsletter/config.py)), plus the hosts of
-  that day's candidate links (so a popular HN story opens its own site to the read tool for that run).
-  Every redirect hop is checked, and so are private IP addresses. A link inside a page does not widen
-  the allowlist.
-- Each event has a read budget. Each run has a cost limit (`RUN_COST_LIMIT_USD`) and a request cap. The
-  cost is checked after each model response, so the last call can go slightly over. After that the
-  run verifies nothing more and the report lists what stayed unverified.
-- Paywalls, logins and CAPTCHAs are not bypassed. A page that refuses the request counts as unread.
+- 🔧 **One tool, read-only.** The model can only read a web page: no shell, no files, no writes.
+- 🌐 **Allowlist.** Only `https` and the hosts in [`config.py`](src/ai_newsletter/config.py), plus
+  the hosts of that day's candidate links. Every redirect hop and private IP address is checked. A
+  link inside a page does not widen the allowlist.
+- 📑 **Cited means read.** Every URL an included item cites must be a page the model read, or the
+  source's own feed text. Otherwise the answer goes back to the model.
+- 💸 **Budgets.** A read budget per event, plus a cost limit (`RUN_COST_LIMIT_USD`) and a request cap
+  per run. Once spent, nothing more is verified and the report lists what stayed unverified.
+- 🚫 **No bypassing.** Paywalls, logins and CAPTCHAs are respected; a refused page counts as unread.
+
+<br>
 
 ## Quick start
 
@@ -107,113 +169,139 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.13.
 
 ```bash
 uv sync
-uv run pytest                     # 37 offline tests, no API key needed
+uv run pytest        # 41 offline tests, no API key needed
 ```
 
-### Try it without API keys or the live web
+### 1. Try it on the demo day
 
-The tests run the whole pipeline on a **fictional day** with fake models. To see what the real model
-does with that day, replay it (needs only an [OpenRouter](https://openrouter.ai) key, costs about $0.01):
+The tests run the whole pipeline on a fictional day with fake models. To see what the **real model**
+does with that day, replay it. It needs only an [OpenRouter](https://openrouter.ai) key and costs
+about $0.01.
 
 ```bash
 export OPENROUTER_API_KEY=...
 uv run ai-newsletter --day 2026-03-10 --replay examples/demo-run
 ```
 
-The demo day ([`build_demo_snapshot.py`](examples/build_demo_snapshot.py)) is invented. The real
-sources only get placeholder items there, so no real company is quoted with made-up news.
+The demo day is built by [`build_demo_snapshot.py`](examples/build_demo_snapshot.py). Real sources
+only get placeholder items there.
 
-### Run it on a real day
+### 2. Run it on a real day
 
 ```bash
-uv run ai-newsletter                        # yesterday (Prague time)
-uv run ai-newsletter --day 2026-11-17       # a chosen day
-uv run ai-newsletter --replay data/runs/2026-11-17/<run>    # same pages again, no web access
-uv run ai-newsletter --single-pass          # baseline: the model may not read extra pages
+uv run ai-newsletter                                        # yesterday (Prague time)
+uv run ai-newsletter --day 2026-11-17                       # a chosen day
+uv run ai-newsletter --replay data/runs/2026-11-17/<run>    # the same pages again, no web access
+uv run ai-newsletter --single-pass                          # baseline: no extra page reads
 ```
 
-History ("already reported?") always comes from the earlier days in `--data-dir`, also on a replay.
-Each run gets its own folder, and nothing is overwritten:
+A run takes **2–3 minutes**. Each run gets its own folder, and nothing is overwritten:
 
 ```
 data/runs/2026-11-17/20261118T184438-agentic-live/
-    report.md       the digest
-    run.json        coverage, candidates, every decision with its reason, cost
-    snapshot.json   every page read, for replay
+├── report.md       the digest
+├── run.json        coverage, candidates, every decision with its reason, cost
+└── snapshot.json   every page read, for replay
 ```
 
-A run takes about 2–3 minutes and costs about **$0.02–0.03** with Claude Haiku 5.5 (measured from
-OpenRouter's own usage counter).
+History ("already reported?") always comes from the earlier days in `--data-dir`, also on a replay.
 
-**Compared with a general-purpose agent.** Before this project, the same digest was made by a general
-agent ([Hermes](https://github.com/NousResearch/hermes-agent) running Codex, with three sub-agents).
-A rough estimate for one day, with that run priced as if paid through the API:
-
-| | Tokens | Cost per digest | 30 days at the same rate |
-|---|---|---|---|
-| General agent | 509,232 input, 10,867,584 cached input, 60,919 output | about $2.71 (GPT-6.1 Sol list price, standard short-context rates) | about $81.43 |
-| This project | | $0.0246 (OpenRouter's usage counter) | about $0.74 |
-
-That is about 110 times cheaper. Treat it as a rough guide: it compares a single day, and the two runs
-did not cover exactly the same sources.
-
-### Send it to Telegram
+### 3. Send it to Telegram
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and send the bot any message.
-2. Find your chat id: write to [@userinfobot](https://t.me/userinfobot), or open
-   `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id`. The bot can be one you
-   already use elsewhere: this app only sends, it never reads the bot's messages.
-3. Optional: to post into one topic (thread) of a group with topics, add the bot to the group, set
-   `TELEGRAM_CHAT_ID` to the group's id (`-100…`) and `TELEGRAM_THREAD_ID` to the topic's id. Both
-   are in a message link from that topic: `t.me/c/<group>/<topic>/<message>`, group id = `-100<group>`.
+2. Find your chat id with [@userinfobot](https://t.me/userinfobot), or open
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id`.
+3. *Optional:* to post into one topic of a group, set `TELEGRAM_CHAT_ID` to the group id (`-100…`)
+   and `TELEGRAM_THREAD_ID` to the topic id. Both are in a message link from that topic:
+   `t.me/c/<group>/<topic>/<message>`, where the group id is `-100<group>`.
 4. Run with `--telegram`:
 
 ```bash
 export TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=...
-uv run ai-newsletter --telegram                                  # run yesterday and send it
-uv run python -m ai_newsletter.telegram data/runs/2026-11-17/<run>   # send an earlier run
+uv run ai-newsletter --telegram                                     # run yesterday and send it
+uv run python -m ai_newsletter.telegram data/runs/2026-11-17/<run>  # send an earlier run
 ```
 
-Delivery is kept apart from the pipeline ([`telegram.py`](src/ai_newsletter/telegram.py)) and sends
-**at most one report per day**. Its state is in `data/runs/<day>/telegram.json`. A clear refusal from
-Telegram (e.g. rate limit) can be retried. If the connection breaks mid-send, nothing is sent again
-automatically: check the chat, then delete `telegram.json` to send again. Replays and single-pass runs
-are never sent. A failed run sends its short "Kontrola nebyla dokončena" note, not an empty digest.
+For a daily digest, run it from cron or a systemd timer after midnight Prague time, and keep the same
+`data/` folder between runs: it is the app's memory.
 
-For a daily digest, run `uv run ai-newsletter --telegram` from cron or a systemd timer after midnight
-Prague time (the original target was 08:00). Keep the same `data/` folder between runs: it is the
-app's memory.
+<details>
+<summary><b>How delivery stays safe</b></summary>
+
+<br>
+
+Delivery is kept apart from the pipeline ([`telegram.py`](src/ai_newsletter/telegram.py)):
+
+- **At most one report per day.** The state is in `data/runs/<day>/telegram.json`.
+- **A clear refusal** from Telegram (e.g. a rate limit) can be retried.
+- **A broken connection** mid-send is never retried blindly: check the chat, then delete
+  `telegram.json` to send again.
+- **Replays and single-pass runs** are never sent.
+- **A failed run** sends its short "Kontrola nebyla dokončena" note, not an empty digest.
+- The bot can be one you already use: this app only sends, it never reads the bot's messages.
+
+</details>
+
+<br>
+
+## Cost
+
+One run costs about **$0.02–0.03** with Claude Haiku 5.5, measured by OpenRouter's own usage counter.
+
+Before this project, the same digest was made by a general-purpose agent
+([Hermes](https://github.com/NousResearch/hermes-agent) running Codex, with three sub-agents). A
+rough estimate for one day, with that run priced as if paid through the API:
+
+| | Cost per digest | 30 days at the same rate |
+|---|---:|---:|
+| General-purpose agent | ~ $2.71 | ~ $81.43 |
+| **This project** | **$0.0246** | **~ $0.74** |
+
+That is **about 110× cheaper**.
+
+> [!CAUTION]
+> A rough guide only: it compares a single day, and the two runs did not cover exactly the same
+> sources. The agent used 509,232 input tokens, 10,867,584 cached input tokens and 60,919 output
+> tokens, priced at the GPT-6.1 Sol list price (standard short-context rates).
+
+<br>
 
 ## Evaluation
 
-[`evals/`](evals) measures the real model on hand-written cases, separately from the tests. Tests
-check the program; evals check the judgement.
+Tests check the program; **evals check the judgement.** [`evals/`](evals) runs the real model on
+hand-written cases and stores every run as a [Braintrust](https://www.braintrust.dev) experiment with
+full traces.
 
-- **Cases** ([`cases.py`](evals/cases.py)): 15 verification and 5 triage cases. They cover: a real new
-  feature, an old project re-posted on HN, one event on three sites, nightly then stable, paid-plan
-  only, an unclear date, an unconfirmed community claim, an unreachable primary source, a quiet day, a
-  hidden instruction in a page, and a key condition that only appears on a linked page. All products
-  are fictional, so the model cannot answer from memory.
-- **Split**: `dev` cases were used while tuning the prompts. `holdout` cases are meant for the final
-  check; [RESULTS.md](evals/RESULTS.md) says how clean that check really was.
-- **Scoring**: most checks are deterministic code (include or not, kind, availability, date, injected
-  text or URL). Two [autoevals](https://github.com/braintrustdata/autoevals) LLM judges check
-  whether the item keeps the key condition and whether every statement is supported by the pages
-  read. The judges are a second opinion, not the final say.
-- **Baseline**: each case runs twice, as the agentic verifier and as a **single-pass** verifier that
-  cannot read extra pages. Everything else is the same.
-- Results are saved as [Braintrust](https://www.braintrust.dev) experiments (with full traces) and
-  summarised in [`evals/RESULTS.md`](evals/RESULTS.md).
+| | |
+|---|---|
+| **Cases** | 15 verification and 5 triage cases in [`cases.py`](evals/cases.py). All products are fictional, so the model cannot answer from memory. |
+| **Split** | `dev` cases were used while tuning the prompts; `holdout` cases are for the final check. |
+| **Scoring** | Mostly deterministic code. Two [autoevals](https://github.com/braintrustdata/autoevals) LLM judges check the caveat and that every statement is supported. They are a second opinion, not the final say. |
+| **Baseline** | Every case also runs on a **single-pass** verifier that cannot read extra pages. Everything else is the same. |
+
+<details>
+<summary><b>What the cases cover</b></summary>
+
+<br>
+
+A real new feature · an old project re-posted on HN · one event on three sites · nightly then
+stable · paid-plan only · an unclear date · an unconfirmed community claim · an unreachable primary
+source · a quiet day · a hidden instruction in a page · a key condition that only appears on a
+linked page.
+
+</details>
 
 ```bash
 export OPENROUTER_API_KEY=... BRAINTRUST_API_KEY=...
 uv run python -m evals.run --split dev      # a few cents per split
 ```
 
-### Results (Claude Haiku 5.5, 3 trials per case)
+### Results
 
-| Holdout, current prompts | agentic | single-pass |
-|---|---|---|
+Claude Haiku 5.5, holdout split, 3 trials per case:
+
+| Score | Agentic | Single-pass |
+|---|:---:|:---:|
 | Right include / exclude decision | 1.00 | 1.00 |
 | Kind of change (release, stable, discovery…) | 1.00 | 1.00 |
 | Availability (stable, beta, announced…) | **1.00** | 0.92 |
@@ -224,56 +312,78 @@ uv run python -m evals.run --split dev      # a few cents per split
 | Model requests per event | 1.29 | 1.00 |
 | Cost per event | $0.0009 | $0.0007 |
 
-Triage: 1.00 on finding and skipping in both splits, and on grouping in dev (the holdout has no event
-spread over several links).
+Triage scored 1.00 on finding and skipping in both splits, and on grouping in dev (the holdout has no
+event spread over several links).
 
-**What this says:** reading one more page when a fact is missing helps where the condition is on a
-linked page (availability, waitlist, quota). It costs about 30% more per event. The decision to
-include or exclude was the same for both variants. Since the items were cut to 8–15 words per field,
-the faithfulness judge finds no unsupported statements (before: 0.91 agentic, 0.73 single-pass). The
-cost: in one trial out of twelve, a short caveat kept one limit and dropped a second one. Scores vary
-between runs (20 cases × 3 trials is small), and the judge is the same model as the writer, so read
-them as a signal. Concrete failures are listed below and in
-[`evals/RESULTS.md`](evals/RESULTS.md).
+**What this says**
+
+- **Reading one more page pays off** when the condition is on a linked page (availability, waitlist,
+  quota). It costs about 30% more per event.
+- **The include / exclude decision is the same** for both variants.
+- **Short items help faithfulness.** Since the fields were capped at 8–15 words, the judge finds no
+  unsupported statements (before: 0.91 agentic, 0.73 single-pass). The price: once in twelve trials,
+  a short caveat kept one limit and dropped a second.
+- **Read it as a signal.** 20 cases × 3 trials is small, scores move between runs, and the judge is
+  the same model as the writer.
+
+Concrete failures and earlier runs are in [`evals/RESULTS.md`](evals/RESULTS.md).
+
+<br>
 
 ## What has been verified
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 41 tests pass: Prague day and DST, source parsing and paging (RSS, Atom, listing pages, GitHub releases and Trending), "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
-| Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
-| Live public sources | Real runs for 2026-11-16 and 2026-11-17 (9 sources) and 2026-11-18 (13 sources), all sources read, complete reports, replays from the saved snapshots. |
-| Delivery | Telegram: 6 offline tests with a fake Telegram API (send once per day, topic of a group, retry only a clear refusal, no blind resend after a broken connection, no token on disk, message splitting) and one real send to a private chat. |
+| **Offline** | 41 tests with fictional data and fake models: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and rejections, statuses, usage limit, duplicates, report format. |
+| **Real model** | Dev and holdout evals in Braintrust ([above](#evaluation)). Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
+| **Live sources** | Real runs for 2026-11-16 and 2026-11-17 (9 sources) and 2026-11-18 (13 sources): all sources read, complete reports, replays from saved snapshots. |
+| **Delivery** | 6 offline tests against a fake Telegram API, and one real send to a private chat. |
 
-## Known limits and failures
+<br>
 
-- **Small invented details.** The judge caught items that added facts the pages do not state (for
-  example "open-source" or "works without its own index"). Since the items were shortened, the last
-  eval run found none, but with 20 cases this is still the main quality risk.
-- **openai.com blocks automated readers** on most article pages (HTTP 403). The app uses the official
-  RSS text, the API changelog and GitHub instead. It does not get around the block.
-- **Sources:** Hacker News (stories with ≥ 20 points); the OpenAI News, Cursor changelog, Latent Space
-  (which now also carries smol.ai's AINews), Pragmatic Engineer and Simon Willison feeds; Anthropic News
-  and Claude Blog (HTML listing pages, so a layout change shows up as a gap); GitHub releases of 4
-  repos; GitHub Trending for Python. Trending shows only "now", so a live run covers it only for
-  yesterday; an older `--day` reports it as a gap. Pragmatic Engineer is mostly paywalled, so its
-  posts are leads, not evidence. **No Reddit:** it refuses unauthenticated readers (HTTP 403/404/429),
-  and the app does not get around that.
-- **Dates:** OpenAI and Cursor feeds publish only the day, and its time zone is unknown. A release
-  dated the day before the target day is still accepted, and history catches the repeat. On listing
-  pages without a feed, a link takes the nearest date shown on the page, which can be a neighbour's.
-  An item whose official source shows no date passes the date check; its caveat should say so.
-- **Memory is thin:** it keeps published items (title, kind, URL) and rejected links (URL, reason),
-  not versions or claims. A repeat at a different URL is caught only if a model recognises it from
-  the titles. Days without a run are gaps in that memory.
-- **Read means downloaded:** a login or paywall page that answers with HTTP 200 counts as read; the
-  model is told to treat it as missing evidence, but the code does not check.
-- **Replays of old days:** HN points are today's points, and pages fetched today may have changed
-  since the target day. A live run of an old day cannot rebuild what was known then.
-- **Model provider:** all model calls go to Anthropic through OpenRouter. If that endpoint is down,
-  the run is partial or failed. It does not fall back to another model.
-- **Not built yet:** the "Trend týdne" weekly section, corrections of past reports, scheduling
-  (left to cron on the server) and e-mail delivery.
+## Known limits
+
+**Quality**
+
+- **Small invented details.** The judge used to catch items adding facts the pages don't state
+  ("open-source", "works without its own index"). The last eval run found none, but with 20 cases it
+  is still the main quality risk.
+- **Czech grammar slips.** The text is clear but not always correct, e.g. *"Méně opakovaného práce"*
+  in the demo above.
+- **Read means downloaded.** A login or paywall page answering HTTP 200 counts as read. The model is
+  told to treat it as missing evidence, but the code does not check.
+
+**Sources**
+
+| Source | Kind | Note |
+|---|---|---|
+| Hacker News | Algolia search | Stories with ≥ 20 points |
+| OpenAI News, Cursor changelog | RSS | Only the day is published, not the time. openai.com blocks automated readers on most article pages (HTTP 403); the app uses the RSS text, the API changelog and GitHub instead and does not get around the block. |
+| Latent Space | RSS | Also carries smol.ai's daily AINews |
+| Simon Willison | Atom | |
+| Pragmatic Engineer | RSS | Mostly paywalled, so its posts are leads, not evidence |
+| Anthropic News, Claude Blog | HTML listing | A link takes the nearest date shown on the page, which can be a neighbour's. A layout change shows up as a gap. |
+| GitHub releases | API | `anthropics/claude-code`, `openai/codex`, `pingdotgg/t3code`, `paperclipai/paperclip` |
+| GitHub Trending (Python) | HTML | Shows only "now", so a live run covers it only for yesterday |
+| **Reddit** | — | **Not included:** it refuses unauthenticated readers (HTTP 403/404/429) |
+
+**Dates and memory**
+
+- **The day before still counts.** Feeds without a time zone make the edge fuzzy, so a release dated
+  the day before is accepted and history catches the repeat. An item whose source shows no date
+  passes the check; its caveat should say so.
+- **Memory is thin.** It keeps published items and rejected links, not versions or claims. A repeat
+  at a different URL is caught only if a model recognises it. Days without a run are gaps.
+- **Old days can't be rebuilt.** On a live run of an old day, HN points and pages are today's.
+
+**Operations**
+
+- **One model provider.** All model calls go to Anthropic through OpenRouter, with no fallback; if it
+  is down, the run is partial or failed.
+- **Not built yet:** the weekly "Trend týdne" section, corrections of past reports, e-mail delivery.
+  Scheduling is left to cron.
+
+<br>
 
 ## Project layout
 
@@ -294,18 +404,19 @@ Suggested reading order:
 | [`evals/`](evals) | Eval cases and the Braintrust runner |
 | [`tests/`](tests) | Offline tests with fake models |
 
+<br>
+
 ## Technology choices
 
-- **[Pydantic AI](https://ai.pydantic.dev)** for the two model steps. The output is a typed Pydantic
-  model, the read tool is a plain function, and `ModelRetry` sends a rejected answer back to the
-  model, for example when it cites a page it did not read. Limits and cost tracking are built in.
-- **[Braintrust](https://www.braintrust.dev)** stores each eval run as an experiment with full traces
-  and compares experiments case by case (agentic vs single-pass).
-- **[autoevals](https://github.com/braintrustdata/autoevals)** provides the two LLM judges.
-- **OpenRouter + Claude Haiku 5.5**: cheap enough to run every day. The model is one constant in
-  `config.py`.
-- **No LangGraph, no database, no web framework.** The flow is a straight line with one loop, so plain
-  Python is easier to read than a graph. Runs are JSON files, so you can open them in any editor.
+| Tool | Why |
+|---|---|
+| **[Pydantic AI](https://ai.pydantic.dev)** | The two model steps. Typed output, the read tool is a plain function, and `ModelRetry` sends a rejected answer back (e.g. a cited page that was not read). Limits and cost tracking are built in. |
+| **[Braintrust](https://www.braintrust.dev)** | Each eval run is an experiment with full traces, compared case by case (agentic vs single-pass). |
+| **[autoevals](https://github.com/braintrustdata/autoevals)** | The two LLM judges. |
+| **OpenRouter + Claude Haiku 5.5** | Cheap enough to run every day. The model is one constant in `config.py`. |
+| **No LangGraph, no database, no web framework** | The flow is a straight line with one loop, so plain Python reads better than a graph. Runs are JSON files you can open in any editor. |
+
+<br>
 
 ## License
 

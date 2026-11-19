@@ -120,12 +120,25 @@ Plain code does the routine work. The model is used only where judgement is need
 worth checking, and whether the sources support the claims.
 
 ```mermaid
-flowchart LR
-    A[Collect<br/>code] --> B[Triage<br/>model]
-    B --> C[Verify each event<br/>model + read tool]
-    C --> D[Select<br/>code]
-    D --> E[Report + save<br/>code]
+flowchart TD
+    hn["🟠 <b>Hacker News</b><br/>AI stories"]
+    blogs["📰 <b>Company blogs</b><br/>OpenAI, Anthropic,<br/>Claude, Cursor"]
+    letters["✍️ <b>Newsletters</b><br/>Latent Space,<br/>Simon Willison,<br/>Pragmatic Engineer"]
+    gh["🐙 <b>GitHub</b><br/>new releases of AI tools,<br/>trending Python repos"]
+
+    hn & blogs & letters & gh --> collect["① <b>Collect</b> · code<br/>keeps only<br/>yesterday's posts"]
+    collect -- "139 links" --> triage["② <b>Triage</b> · AI<br/>joins links about one event,<br/>drops noise and repeats"]
+    triage -- "10 events" --> verify["③ <b>Verify</b> · AI<br/>reads the sources:<br/>what changed, is it out,<br/>who can use it"]
+    verify --> select["④ <b>Select</b> · code<br/>only new, confirmed news,<br/>at most 7"]
+    select -- "6 items" --> report["⑤ <b>Report</b> · code<br/>short Czech digest<br/>with links"]
+    report --> tg["📬 <b>Telegram</b><br/>once a day"]
+
+    memory[("🧠 <b>Memory</b><br/>last 14 days")]
+    memory -. "what was sent<br/>or rejected" .-> triage
+    report -. "saves the run" .-> memory
 ```
+
+<sub>The numbers are from the real run for 18 November 2026.</sub>
 
 | Step | Who | What happens |
 |---|---|---|

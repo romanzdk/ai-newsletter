@@ -21,25 +21,22 @@ made up (see [below](#try-it-without-api-keys-or-the-live-web)):
 ```markdown
 # AI novinky za 10. 3. 2026
 
-**1. Quillstack 2.0: resumable runs jsou stabilní a výchozí**
-Quillstack 2.0 je vydán jako generally available a obnovení běhů agenta od posledního uloženého kroku je
-ve verzi 2.0 stabilní a zapnuté ve výchozím nastavení. Běh agenta přerušený pádem, timeoutem nebo rate
-limitem může pokračovat od posledního uloženého kroku místo restartu od začátku.
-Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky a uložený stav běhu se drží
-jen 24 hodin na Free plánu a 30 dní na Team plánu.
-Zdroj: https://quillstack.dev/blog/quillstack-2-0
+**1. Quillstack 2.0 je dostupný, obnovení běhů je stabilní**
+Běhy agentů lze obnovit od posledního uloženého kroku; funkce je stabilní a ve výchozím stavu zapnutá.
+Méně opakovaného práce po pádu, timeoutu nebo rate limitu.
+Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky.
+Zdroj: https://github.com/quillstack/quillstack/releases/tag/v2.0.0
 
-**2. Objev: Tidepool: terminálový dashboard pro coding agenty**
-Na Hacker News se objevil open-source projekt Tidepool, ...
+**2. Lumen Agents přidává sdílené týmové workspaces**
 ...
 ---
-Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, ...
+Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Latent Space, ...
 Mezery v pokrytí: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).
 ```
 
-Item 2 shows the main known failure: the page never says Tidepool is "open-source"; the model
-added it. On the same day the app left out an unconfirmed "Orbitcode drops files" rumour, a funding story, an
-unrelated story, and a page with a hidden instruction telling AI systems to rank it first. The
+Items are short on purpose: the link has the details. On the same day the app left out an unconfirmed
+"Orbitcode drops files" rumour, a funding story, an unrelated story, and a page with a hidden
+instruction telling AI systems to rank it first. The
 [full report](examples/demo-run/report.md) and [run record](examples/demo-run/run.json) show the
 reason for each decision.
 
@@ -243,9 +240,9 @@ them as a signal. Concrete failures are listed below and in
 
 | Level | Status |
 |---|---|
-| Offline, fictional data, fake models | 37 tests pass: Prague day and DST, source parsing and paging, "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
+| Offline, fictional data, fake models | 41 tests pass: Prague day and DST, source parsing and paging (RSS, Atom, listing pages, GitHub releases and Trending), "no longer covers that day" detection, allowlist, malformed URLs and redirects, retries, history and remembered rejections, statuses, usage limit, duplicates, report format. |
 | Real model, fictional cases | Dev and holdout evals in Braintrust, see above. Case labels were written by Claude, the AI that built this project, and **still need a human review**. |
-| Live public sources | Real runs for 2026-11-16 and 2026-11-17, all 9 sources read, complete reports, replays from the saved snapshots. |
+| Live public sources | Real runs for 2026-11-16 and 2026-11-17 (9 sources) and 2026-11-18 (13 sources), all sources read, complete reports, replays from the saved snapshots. |
 | Delivery | Telegram: 6 offline tests with a fake Telegram API (send once per day, topic of a group, retry only a clear refusal, no blind resend after a broken connection, no token on disk, message splitting) and one real send to a private chat. |
 
 ## Known limits and failures
@@ -255,9 +252,13 @@ them as a signal. Concrete failures are listed below and in
   eval run found none, but with 20 cases this is still the main quality risk.
 - **openai.com blocks automated readers** on most article pages (HTTP 403). The app uses the official
   RSS text, the API changelog and GitHub instead. It does not get around the block.
-- **Sources in v1:** Hacker News (stories with ≥ 20 points), OpenAI News RSS, Cursor changelog RSS,
-  Anthropic News and Claude Blog (HTML listing pages, so a layout change shows up as a gap), and
-  GitHub releases of 4 repos. No Reddit, no other blogs, no GitHub Trending.
+- **Sources:** Hacker News (stories with ≥ 20 points); the OpenAI News, Cursor changelog, Latent Space
+  (which now also carries smol.ai's AINews), Pragmatic Engineer and Simon Willison feeds; Anthropic News
+  and Claude Blog (HTML listing pages, so a layout change shows up as a gap); GitHub releases of 4
+  repos; GitHub Trending for Python. Trending shows only "now", so a live run covers it only for
+  yesterday; an older `--day` reports it as a gap. Pragmatic Engineer is mostly paywalled, so its
+  posts are leads, not evidence. **No Reddit:** it refuses unauthenticated readers (HTTP 403/404/429),
+  and the app does not get around that.
 - **Dates:** OpenAI and Cursor feeds publish only the day, and its time zone is unknown. A release
   dated the day before the target day is still accepted, and history catches the repeat. On listing
   pages without a feed, a link takes the nearest date shown on the page, which can be a neighbour's.
@@ -283,7 +284,7 @@ Suggested reading order:
 | [`pipeline.py`](src/ai_newsletter/pipeline.py) | The whole run, step by step, and the selection rules |
 | [`agents.py`](src/ai_newsletter/agents.py) | The two Pydantic AI agents, their instructions and the read tool |
 | [`models.py`](src/ai_newsletter/models.py) | The data of a run, from candidate to verdict to run record |
-| [`sources.py`](src/ai_newsletter/sources.py) | Reading HN, RSS, listing pages and GitHub releases |
+| [`sources.py`](src/ai_newsletter/sources.py) | Reading HN, RSS and Atom feeds, listing pages, GitHub releases and Trending |
 | [`web.py`](src/ai_newsletter/web.py) | Allowlist, downloads, snapshots, HTML to text |
 | [`days.py`](src/ai_newsletter/days.py) | The Prague calendar day |
 | [`store.py`](src/ai_newsletter/store.py) | Run folders and history |

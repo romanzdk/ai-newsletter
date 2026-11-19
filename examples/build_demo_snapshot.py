@@ -183,6 +183,13 @@ def placeholder_releases(repo: str) -> str:
     return json.dumps([release])
 
 
+def placeholder_trending() -> str:
+    return (
+        '<article class="Box-row"><h2 class="h3"><a href="/demo-org/placeholder-repo">demo-org / placeholder-repo</a>'
+        '</h2><p class="col-9">Fictional demo data.</p> 12 stars today</article>'
+    )
+
+
 def page(url: str, body: str, content_type: str = "text/html") -> Page:
     return Page(url=url, final_url=url, status=200, content_type=content_type, body=body, fetched_at=FETCHED)
 
@@ -203,6 +210,8 @@ def build() -> dict[str, Page]:
         elif source.kind == "github_releases":
             repo = source.name.removeprefix("GitHub ")
             pages[source.url] = page(source.url, placeholder_releases(repo), "application/json")
+        elif source.kind == "github_trending":
+            pages[source.url] = page(source.url, placeholder_trending())
     for url, body in PAGES.items():
         pages[url] = page(url, body)
     return pages

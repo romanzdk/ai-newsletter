@@ -1,6 +1,7 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 
+from ai_newsletter import days
 from ai_newsletter.config import Source
 from ai_newsletter.sources import _collect_one, collect, hacker_news, hn_search_url
 from ai_newsletter.web import Page, Web
@@ -31,6 +32,21 @@ async def test_rss_keeps_items_of_the_day_and_reads_midnight_as_date_only():
     assert coverage.ok
     assert [c.title for c in found] == ["new", "timed"]
     assert type(found[0].published) is date
+
+
+async def test_atom_feeds_are_read_too():
+    body = (
+        '<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>llm 1.0</title>'
+        '<link href="https://simonwillison.net/2026/Mar/10/llm/" rel="alternate"/>'
+        "<published>2026-03-10T15:00:00+00:00</published><summary>&lt;p&gt;New release&lt;/p&gt;</summary></entry>"
+        '<entry><title>older</title><link href="https://simonwillison.net/old"/>'
+        "<updated>2026-03-02T10:00:00+00:00</updated></entry></feed>"
+    )
+    found, coverage = await _collect_one(web_with(RSS.url, body), RSS, DEMO_DAY)
+    assert coverage.ok
+    assert [(c.title, c.url, c.summary) for c in found] == [
+        ("llm 1.0", "https://simonwillison.net/2026/Mar/10/llm/", "New release")
+    ]
 
 
 async def test_a_feed_that_no_longer_reaches_the_day_is_a_gap_not_a_quiet_day():
@@ -106,4 +122,31 @@ async def test_one_broken_source_does_not_stop_the_others():
     broken = [c for c in coverage if not c.ok]
     assert [c.source for c in broken] == ["OpenAI News"]
     assert "503" in broken[0].error
-    assert len(candidates) == 8
+    assert len(candidates) == 9
+
+
+TRENDING = Source("GitHub Trending Python", "github_trending", "https://github.com/trending/python?since=daily")
+
+
+async def test_trending_repositories_belong_to_the_day_and_keep_their_new_stars():
+    row = (
+        '<article class="Box-row"><h2 class="h3"><a href="/org/tool">org / tool</a></h2>'
+        '<p class="col-9 color-fg-muted">Agent &amp; CLI</p> 1,353 stars today</article>'
+    )
+    found, coverage = await _collect_one(web_with(TRENDING.url, row), TRENDING, DEMO_DAY)
+    assert coverage.ok
+    assert [(c.title, c.url, c.published, c.summary) for c in found] == [
+        ("org/tool", "https://github.com/org/tool", DEMO_DAY, "Agent & CLI (1,353 new stars that day)")
+    ]
+
+
+async def test_trending_with_a_changed_layout_is_an_error_not_a_quiet_day():
+    _, coverage = await _collect_one(web_with(TRENDING.url, "<html>new layout</html>"), TRENDING, DEMO_DAY)
+    assert not coverage.ok
+    assert "layout" in coverage.error
+
+
+async def test_a_live_run_cannot_take_todays_trending_for_an_older_day():
+    _, coverage = await _collect_one(Web(), TRENDING, days.yesterday() - timedelta(days=3))
+    assert not coverage.ok
+    assert "only the last day" in coverage.error

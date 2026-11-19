@@ -33,7 +33,7 @@ USER_AGENT = "ai-newsletter/0.1 (+https://github.com/romanzdk/ai-newsletter)"
 @dataclass(frozen=True)
 class Source:
     name: str
-    kind: Literal["hacker_news", "rss", "html_listing", "github_releases"]
+    kind: Literal["hacker_news", "rss", "html_listing", "github_releases", "github_trending"]
     url: str
     link_pattern: str = ""  # html_listing only: regex for article links on the listing page
 
@@ -44,6 +44,10 @@ SOURCES = [
     Source("Hacker News", "hacker_news", "https://hn.algolia.com/api/v1/search_by_date"),
     Source("OpenAI News", "rss", "https://openai.com/news/rss.xml"),
     Source("Cursor Changelog", "rss", "https://cursor.com/changelog/rss.xml"),
+    # Also carries smol.ai's daily "AINews" roundup, which moved here (news.smol.ai stopped in 2026-09).
+    Source("Latent Space", "rss", "https://www.latent.space/feed"),
+    Source("Simon Willison", "rss", "https://simonwillison.net/atom/everything/"),
+    Source("Pragmatic Engineer", "rss", "https://newsletter.pragmaticengineer.com/feed"),
     # Category pages like /news/product are one word; articles have a hyphenated slug.
     Source("Anthropic News", "html_listing", "https://www.anthropic.com/news", r"^/news/\w+-[\w-]+$"),
     Source("Claude Blog", "html_listing", "https://claude.com/blog", r"(/blog/|/articles/)\w+-[\w-]+/?$"),
@@ -51,6 +55,7 @@ SOURCES = [
         Source(f"GitHub {repo}", "github_releases", f"https://api.github.com/repos/{repo}/releases?per_page=30")
         for repo in GITHUB_REPOS
     ],
+    Source("GitHub Trending Python", "github_trending", "https://github.com/trending/python?since=daily"),
 ]
 
 # Named to the verifier as places to check a release.
@@ -83,4 +88,8 @@ ALLOWED_HOSTS = {
     "cursor.com",
     "docs.cursor.com",
     "forum.cursor.com",
+    "www.latent.space",
+    "latent.space",
+    "simonwillison.net",
+    "newsletter.pragmaticengineer.com",
 }

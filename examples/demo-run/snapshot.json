@@ -26,6 +26,33 @@
   "fetched_at": "2026-03-11T06:00:00Z",
   "error": null
  },
+ "https://www.latent.space/feed": {
+  "url": "https://www.latent.space/feed",
+  "final_url": "https://www.latent.space/feed",
+  "status": 200,
+  "content_type": "application/rss+xml",
+  "body": "<rss version='2.0'><channel><item><title>Older item (fictional demo data)</title><link>https://example.com/demo-older-item</link><pubDate>Mon, 02 Mar 2026 10:00:00 GMT</pubDate><description>Fictional demo data.</description></item></channel></rss>",
+  "fetched_at": "2026-03-11T06:00:00Z",
+  "error": null
+ },
+ "https://simonwillison.net/atom/everything/": {
+  "url": "https://simonwillison.net/atom/everything/",
+  "final_url": "https://simonwillison.net/atom/everything/",
+  "status": 200,
+  "content_type": "application/rss+xml",
+  "body": "<rss version='2.0'><channel><item><title>Older item (fictional demo data)</title><link>https://example.com/demo-older-item</link><pubDate>Mon, 02 Mar 2026 10:00:00 GMT</pubDate><description>Fictional demo data.</description></item></channel></rss>",
+  "fetched_at": "2026-03-11T06:00:00Z",
+  "error": null
+ },
+ "https://newsletter.pragmaticengineer.com/feed": {
+  "url": "https://newsletter.pragmaticengineer.com/feed",
+  "final_url": "https://newsletter.pragmaticengineer.com/feed",
+  "status": 200,
+  "content_type": "application/rss+xml",
+  "body": "<rss version='2.0'><channel><item><title>Older item (fictional demo data)</title><link>https://example.com/demo-older-item</link><pubDate>Mon, 02 Mar 2026 10:00:00 GMT</pubDate><description>Fictional demo data.</description></item></channel></rss>",
+  "fetched_at": "2026-03-11T06:00:00Z",
+  "error": null
+ },
  "https://www.anthropic.com/news": {
   "url": "https://www.anthropic.com/news",
   "final_url": "https://www.anthropic.com/news",
@@ -77,6 +104,15 @@
   "status": 200,
   "content_type": "application/json",
   "body": "[{\"html_url\": \"https://github.com/paperclipai/paperclip/releases/tag/v0.0.1-demo\", \"name\": \"Older release (fictional demo data)\", \"tag_name\": \"v0.0.1-demo\", \"published_at\": \"2026-03-01T10:00:00Z\", \"draft\": false, \"prerelease\": false, \"body\": \"Fictional demo data.\"}]",
+  "fetched_at": "2026-03-11T06:00:00Z",
+  "error": null
+ },
+ "https://github.com/trending/python?since=daily": {
+  "url": "https://github.com/trending/python?since=daily",
+  "final_url": "https://github.com/trending/python?since=daily",
+  "status": 200,
+  "content_type": "text/html",
+  "body": "<article class=\"Box-row\"><h2 class=\"h3\"><a href=\"/demo-org/placeholder-repo\">demo-org / placeholder-repo</a></h2><p class=\"col-9\">Fictional demo data.</p> 12 stars today</article>",
   "fetched_at": "2026-03-11T06:00:00Z",
   "error": null
  },

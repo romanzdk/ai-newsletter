@@ -1,20 +1,20 @@
 # AI novinky za 10. 3. 2026
 
-**1. Quillstack 2.0: resumable runs jsou stabilní a výchozí**  
-Quillstack 2.0 je vydán jako generally available a obnovení běhů agenta od posledního uloženého kroku je ve verzi 2.0 stabilní a zapnuté ve výchozím nastavení. Běh agenta přerušený pádem, timeoutem nebo rate limitem může pokračovat od posledního uloženého kroku místo restartu od začátku.  
-Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky a uložený stav běhu se drží jen 24 hodin na Free plánu a 30 dní na Team plánu.  
-Zdroj: https://quillstack.dev/blog/quillstack-2-0
+**1. Quillstack 2.0 je dostupný, obnovení běhů je stabilní**  
+Běhy agentů lze obnovit od posledního uloženého kroku; funkce je stabilní a ve výchozím stavu zapnutá. Méně opakovaného práce po pádu, timeoutu nebo rate limitu.  
+Výhrada: Kroky zapisující do externích systémů se nereplayují automaticky.  
+Zdroj: https://github.com/quillstack/quillstack/releases/tag/v2.0.0
 
-**2. Objev: Tidepool: terminálový dashboard pro coding agenty**  
-Na Hacker News se objevil open-source projekt Tidepool, který v terminálu zobrazuje aktivitu coding agentů. Hodí se pro sledování příkazů, tokenů a změn souborů u agentů, které zapisují JSON logy.  
-Výhrada: Poslední release je z listopadu 2025, podporu konkrétních agentů a licenci jsem neověřil a nástroj běží jen na Linuxu a macOS.  
-Zdroj: https://github.com/tidepool-dev/tidepool
-
-**3. Lumen Agents přidává sdílené týmové workspace**  
-Týmové workspace umožňují více lidem sdílet agenty, tajné údaje a historii běhů na jednom místě, s rolemi owner, editor a viewer. Tým může spravovat agenty a jejich běhy společně místo jednotlivých účtů.  
-Výhrada: Funkce je dostupná jen v plánech Pro a Enterprise, zavádí se postupně během 7 dnů a stránka neuvádí ceny.  
+**2. Lumen Agents přidává sdílené týmové workspaces**  
+Týmové workspaces sdílí agenty, tajemství a historii běhů s rolemi owner, editor, viewer. Týmová spolupráce na agentech, tajemstvích a bězích v jednom místě.  
+Výhrada: Jen Pro a Enterprise; Free nemá; zavádění 7 dní.  
 Zdroj: https://lumenagents.dev/changelog/team-workspaces
 
+**3. Objev: Tidepool: terminálový dashboard pro kódovací agenty**  
+Terminálový dashboard zobrazuje příkazy, tokeny a změněné soubory kódovacích agentů. Přehled o činnosti agentů v terminálu; podporuje agenty s JSON logy.  
+Výhrada: Pouze Linux a macOS; licence a instalace neověřeny.  
+Zdroj: https://github.com/tidepool-dev/tidepool
+
 ---
-Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Anthropic News, Claude Blog, GitHub anthropics/claude-code, GitHub openai/codex, GitHub pingdotgg/t3code, GitHub paperclipai/paperclip.
+Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Latent Space, Simon Willison, Pragmatic Engineer, Anthropic News, Claude Blog, GitHub anthropics/claude-code, GitHub openai/codex, GitHub pingdotgg/t3code, GitHub paperclipai/paperclip, GitHub Trending Python.
 Mezery v pokrytí: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).

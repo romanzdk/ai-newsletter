@@ -39,8 +39,9 @@ async def _collect_one(web: Web, source: Source, day: date) -> tuple[list[Candid
     except (SourceError, ValueError, KeyError, TypeError, ElementTree.ParseError) as error:
         return [], SourceCoverage(source=source.name, url=source.url, ok=False, error=str(error))
     found = [item for item in items if item.published and days.day_of(item.published) == day]
-    # The HN search is by date; the other sources list only their newest items and can cut the day off.
-    gap = None if source.kind == "hacker_news" else _coverage_gap(items, day)
+    # HN is searched by date and Trending is one day by definition; the other sources list only their
+    # newest items and can cut the day off.
+    gap = None if source.kind in ("hacker_news", "github_trending") else _coverage_gap(items, day)
     return found, SourceCoverage(source=source.name, url=source.url, ok=gap is None, candidates=len(found), error=gap)
 
 
@@ -109,11 +110,16 @@ async def hacker_news(web: Web, source: Source, day: date) -> list[Candidate]:
     raise SourceError(f"more than {HN_MAX_PAGES} pages of results; the rest was not read")
 
 
-# --- RSS feeds -------------------------------------------------------------------
+# --- RSS and Atom feeds ------------------------------------------------------------
+
+ATOM = "{http://www.w3.org/2005/Atom}"
 
 
 async def rss(web: Web, source: Source, day: date) -> list[Candidate]:
-    items = ElementTree.fromstring(await _read(web, source.url)).findall("./channel/item")
+    root = ElementTree.fromstring(await _read(web, source.url))
+    if root.tag == f"{ATOM}feed":
+        return [_atom_entry(source, entry) for entry in root.findall(f"{ATOM}entry")]
+    items = root.findall("./channel/item")
     return [
         Candidate(
             id=_id("rss", item.findtext("link", "").strip()),
@@ -125,6 +131,20 @@ async def rss(web: Web, source: Source, day: date) -> list[Candidate]:
         )
         for item in items
     ]
+
+
+def _atom_entry(source: Source, entry: ElementTree.Element) -> Candidate:
+    links = entry.findall(f"{ATOM}link")
+    url = next((link.get("href") for link in links if link.get("rel", "alternate") == "alternate"), "")
+    published = entry.findtext(f"{ATOM}published") or entry.findtext(f"{ATOM}updated")
+    return Candidate(
+        id=_id("rss", url),
+        source=source.name,
+        title=entry.findtext(f"{ATOM}title", "").strip(),
+        url=url,
+        published=datetime.fromisoformat(published) if published else None,
+        summary=_plain(entry.findtext(f"{ATOM}summary") or entry.findtext(f"{ATOM}content") or ""),
+    )
 
 
 def _rss_date(value: str | None) -> datetime | date | None:
@@ -209,4 +229,43 @@ def _release_title(repo: str, release: dict) -> str:
     return f"{title} (pre-release)" if release["prerelease"] else title
 
 
-READERS = {"hacker_news": hacker_news, "rss": rss, "html_listing": html_listing, "github_releases": github_releases}
+# --- GitHub Trending -------------------------------------------------------------
+
+_TRENDING_ROW = re.compile(r'<article class="Box-row">(.*?)</article>', re.S)
+_TRENDING_REPO = re.compile(r'<h2[^>]*>\s*<a[^>]*href="/([\w.-]+/[\w.-]+)"')
+_TRENDING_ABOUT = re.compile(r'<p class="col-9[^"]*">(.*?)</p>', re.S)
+_TRENDING_STARS = re.compile(r"([\d,]+) stars today")
+
+
+async def github_trending(web: Web, source: Source, day: date) -> list[Candidate]:
+    """Repositories with the most new stars in the last day. The page shows only "now", so a live run
+    can cover only yesterday; a replay uses the page saved when that run was made."""
+    if web.live and day != days.yesterday():
+        raise SourceError(f"Trending shows only the last day, it cannot cover {day}")
+    found = []
+    for row in _TRENDING_ROW.findall(await _read(web, source.url)):
+        if not (repo := _TRENDING_REPO.search(row)):
+            raise SourceError("a row without a repository link; the page layout may have changed")
+        about = _TRENDING_ABOUT.search(row)
+        stars = _TRENDING_STARS.search(row)
+        summary = _plain(about.group(1)) if about else ""
+        if stars:
+            summary = f"{summary} ({stars.group(1)} new stars that day)".strip()
+        url = f"https://github.com/{repo.group(1)}"
+        found.append(
+            Candidate(
+                id=_id("trend", url), source=source.name, title=repo.group(1), url=url, published=day, summary=summary
+            )
+        )
+    if not found:
+        raise SourceError("found no repositories; the page layout may have changed")
+    return found
+
+
+READERS = {
+    "hacker_news": hacker_news,
+    "rss": rss,
+    "html_listing": html_listing,
+    "github_releases": github_releases,
+    "github_trending": github_trending,
+}

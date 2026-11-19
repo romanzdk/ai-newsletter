@@ -84,11 +84,13 @@ class Verdict(BaseModel):
     date_note: str | None = Field(description="Any doubt or conflict about the date, else null.")
     impact: int = Field(ge=1, le=5, description="Practical impact for developers: 1 minor, 5 major.")
     claims: list[Claim] = Field(description="The key facts, each with the page that supports it.")
-    title: str = Field(description="Czech: short, concrete headline.")
-    what_changed: str = Field(description="Czech: one short sentence on what changed.")
-    why_it_matters: str = Field(description="Czech: one short sentence on the practical use. No invented benefits.")
+    # Short on purpose: the reader opens source_url for the details.
+    title: str = Field(description="Czech: short, concrete headline, at most 8 words.")
+    what_changed: str = Field(description="Czech: what changed, at most 15 words. The main change only, no lists.")
+    why_it_matters: str = Field(description="Czech: the practical use, at most 12 words. No invented benefits.")
     caveat: str | None = Field(
-        description="Czech: one short sentence with the single most important limit (plan, preview, region...)."
+        description="Czech: the single most important limit (plan, preview, region...), at most 10 words. "
+        "Null if none matters."
     )
     source_url: str = Field(description="The decisive source, a page you read.")
 

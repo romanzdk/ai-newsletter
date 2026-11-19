@@ -12,8 +12,9 @@ tests: those check the program, these check the model's judgement.
 ## Final prompts (2026-11-18)
 
 Measured at commit `b65e56b`. Commit `d540273` later added one instruction line (treat login,
-paywall and error pages as unread) and code fixes that do not touch the eval path. That version
-has not been re-measured.
+paywall and error pages as unread) and code fixes that do not touch the eval path. Commit
+"Shorter digest items" then capped the Czech fields at 8–15 words. These versions have not been
+re-measured.
 
 Scores are the mean over trials. A scorer that does not apply to a case is skipped, for example the
 caveat check on an item that was rightly left out.

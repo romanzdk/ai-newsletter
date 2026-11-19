@@ -104,7 +104,7 @@ verifier = Agent(
         "A candidate's summary comes from the source's own feed or API: it is evidence for exactly what it says, "
         "and you may cite the candidate URL for it even when the full page could not be read. "
         "Include an important event when its core claim (what changed, that it is available) is supported by an "
-        "official source, even if details are missing; name the missing details in the caveat. Exclude it only "
+        "official source, even if details are missing; say briefly in the caveat what is unverified. Exclude it only "
         "when the core claim itself is unsupported. "
         "If a key fact is still missing and a tool is available, read the one page most likely to answer it "
         f"(the release, the original announcement, the docs; official changelogs: {', '.join(OFFICIAL_CHANGELOGS)}). "

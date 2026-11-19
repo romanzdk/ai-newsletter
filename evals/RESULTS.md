@@ -8,6 +8,7 @@ tests: those check the program, these check the model's judgement.
 - All cases are fictional. Their labels were written by Claude, the AI that built this project, and
   have **not yet been reviewed by a human**.
 - Full traces are stored in Braintrust (project `ai-newsletter`; the links need access to that account).
+  Only the experiments of the latest run (2026-11-19) are kept there; the older ones were deleted.
 
 ## Current prompts: shorter items (2026-11-19)
 

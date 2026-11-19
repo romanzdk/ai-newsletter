@@ -48,7 +48,7 @@ dating**, not summarising.
 
 ## Contents
 
-- [Example](#example)
+- [Example](#example) · [Demo day](#the-demo-day)
 - [How it works](#how-it-works) · [Run status](#every-run-ends-with-an-honest-status) · [Memory](#memory) · [Safety](#safety)
 - [Quick start](#quick-start) · [Demo day](#1-try-it-on-the-demo-day) · [Real day](#2-run-it-on-a-real-day) · [Telegram](#3-send-it-to-telegram)
 - [Cost](#cost)
@@ -62,8 +62,21 @@ dating**, not summarising.
 
 ## Example
 
-The full report for the **fictional demo day** in [`examples/demo-run`](examples/demo-run). Every
-product in it is made up, so no real company is quoted with invented news.
+A real report for 18 November 2026, as it arrives in Telegram:
+
+<p align="center">
+  <img src="assets/telegram-report.png" width="370" alt="The digest for 18 November 2026 in Telegram: six items, each with a headline, what changed, a caveat and a source link, then the list of sources checked">
+</p>
+
+Items are short on purpose: the link has the details. Each one says **what changed**, **why it
+matters**, the **caveat** ("Výhrada") and the **source** ("Zdroj"). The last lines list every source
+that was checked.
+
+### The demo day
+
+The repo also contains a **fictional demo day** in [`examples/demo-run`](examples/demo-run), which you
+can [replay yourself](#1-try-it-on-the-demo-day). Every product in it is made up, so no real company
+is quoted with invented news. Its full report:
 
 ```markdown
 # AI novinky za 10. 3. 2026
@@ -91,7 +104,7 @@ Kontrola: částečná. Zdroje: Hacker News, Cursor Changelog, Latent Space, …
 Mezery v pokrytí: OpenAI News (https://openai.com/news/rss.xml: HTTP 503).
 ```
 
-Items are short on purpose: the link has the details. On the same day the app **left out**:
+On that day the app **left out**:
 
 - an unconfirmed "Orbitcode drops files" rumour,
 - a funding story and an unrelated story,

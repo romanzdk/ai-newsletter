@@ -447,3 +447,7 @@ Suggested reading order:
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Made by [Roman Žydyk](https://romanzdk.com).

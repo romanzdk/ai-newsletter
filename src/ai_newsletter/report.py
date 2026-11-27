@@ -1,4 +1,4 @@
-"""Step 9 output: the Czech digest as Markdown. Plain formatting, no model call."""
+"""Report step: the Czech digest as Markdown. Plain formatting, no model call."""
 
 from datetime import date
 

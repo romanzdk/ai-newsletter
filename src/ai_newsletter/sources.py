@@ -1,4 +1,4 @@
-"""Step 2: collect candidates for the target day from every source. Plain code, no model.
+"""Collect step: candidates for the target day from every source. Plain code, no model.
 
 A broken source does not stop the run: it is recorded in the coverage with its error,
 and the other sources still count. A source that answers but contains nothing we can parse

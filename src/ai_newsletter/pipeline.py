@@ -142,7 +142,7 @@ async def verify_event(
 
 
 def select(events: list[EventResult], day: date, history: list[HistoryItem]) -> None:
-    """Step 7-8 in code: drop what is not new, already reported or weak, keep the top MAX_ITEMS."""
+    """Drop what is not new, already reported or weak, keep the top MAX_ITEMS."""
     reported = {item.source_url for item in history}
     keep, kept_sources = [], set()
     for event in events:

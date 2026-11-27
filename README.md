@@ -161,7 +161,7 @@ The whole flow is in [`pipeline.py`](src/ai_newsletter/pipeline.py): start there
 ### Memory
 
 There is no database. Every run is a folder of files. Before a run, the app reads the latest
-successful live run of each of the **last 14 days** and takes two things from them:
+successful agentic live run of each of the **last 14 days** and takes two things from them:
 
 - **Published items** (title, kind, source URL). Both models see them, so a repeat is skipped and a
   stable release can say it follows an earlier preview. In code, an already published source URL is

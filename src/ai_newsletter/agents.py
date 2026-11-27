@@ -1,4 +1,4 @@
-"""The two places where the model decides: triage (step 3-4) and verification (step 5-6).
+"""The two places where the model decides: triage and verification.
 
 Everything around them is plain code. The model gets no shell and no write access: its only
 tool reads a web page, and `Web` refuses any URL outside the allowlist, whatever the model or
